@@ -1,0 +1,294 @@
+%
+% Complete documentation on the extended LaTeX markup used for Insight
+% documentation is available in ``Documenting Insight'', which is part
+% of the standard documentation for Insight.  It may be found online
+% at:
+%
+%     http://www.itk.org/
+
+\documentclass{InsightArticle}
+\usepackage[dvips]{graphicx}
+
+\usepackage{color}
+\definecolor{mygreen}{rgb}{0,0.6,0}
+\definecolor{mygray}{rgb}{0.5,0.5,0.5}
+\definecolor{mymauve}{rgb}{0.58,0,0.82}
+\usepackage{listings}
+\lstset{language=C++,
+        basicstyle=\ttfamily\footnotesize,
+        keywordstyle=\color{blue},
+        stringstyle=\color{mymauve},
+        commentstyle=\color{mygreen},
+        morecomment=[l][\color{magenta}]{\#}
+}
+\usepackage{amsmath}
+\usepackage{commath} % defines abs, norm, vec, etc
+\usepackage{mathtools} % complex arrows
+\usepackage{bm} %easy usage of bold in math mode
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%  hyperref should be the last package to be loaded.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage[
+bookmarks,
+bookmarksopen,
+backref,
+colorlinks,linkcolor={blue},citecolor={blue},urlcolor={blue}
+]{hyperref}
+%  This is a template for Papers to the Insight Journal.
+%  It is comparable to a technical report format.
+
+% The title should be descriptive enough for people to be able to find
+% the relevant document.
+\title{Module itkWavelets: Isotropic Wavelets in the frequency domain.}
+
+%
+% NOTE: This is the last number of the "handle" URL that
+% The Insight Journal assigns to your paper as part of the
+% submission process. Please replace the number "1338" with
+% the actual handle number that you get assigned.
+%
+\newcommand{\IJhandlerIDnumber}{3558}
+
+% Increment the release number whenever significant changes are made.
+% The author and/or editor can define 'significant' however they like.
+\release{0.01}
+
+% At minimum, give your name and an email address.  You can include a
+% snail-mail address if you like.
+\author{P. H. Cerdan $^{1,2}$}
+\authoraddress{$^{1}$ Institute of Fundamental Sciences, Massey University, New Zealand\\
+  $^{2}$ p.hernandezcerdan@massey.ac.nz}
+
+\begin{document}
+
+%
+% Add hyperlink to the web location and license of the paper.
+% The argument of this command is the handler identifier given
+% by the Insight Journal to this paper.
+%
+\IJhandlefooter{\IJhandlerIDnumber}
+
+
+\ifpdf
+\else
+   %
+   % Commands for including Graphics when using latex
+   %
+   \DeclareGraphicsExtensions{.eps,.jpg,.gif,.tiff,.bmp,.png}
+   \DeclareGraphicsRule{.jpg}{eps}{.jpg.bb}{`convert #1 eps:-}
+   \DeclareGraphicsRule{.gif}{eps}{.gif.bb}{`convert #1 eps:-}
+   \DeclareGraphicsRule{.tiff}{eps}{.tiff.bb}{`convert #1 eps:-}
+   \DeclareGraphicsRule{.bmp}{eps}{.bmp.bb}{`convert #1 eps:-}
+   \DeclareGraphicsRule{.png}{eps}{.png.bb}{`convert #1 eps:-}
+\fi
+
+
+\maketitle
+
+
+\ifhtml
+\chapter*{Front Matter\label{front}}
+\fi
+
+\begin{abstract}
+\noindent
+This document describes the implementation of isotropic wavelets in the frequency domain, this is part of the module itkWavelets,
+and also serve as an introduction to these Wavelets.
+
+A Riesz operator filter is also provided that couples with the wavelet analysis and provides \textbf{TODO} to the isotropic framework.
+
+This paper is accompanied with the source code, input data, parameters and
+output data that the author used for validating the algorithm described in
+this paper. This adheres to the fundamental principle that scientific
+publications must facilitate reproducibility of the reported results.
+
+\end{abstract}
+
+\IJhandlenote{\IJhandlerIDnumber}
+
+\tableofcontents
+
+\section{Introduction to Wavelet decomposition}
+\label{sec:Intro}
+Some references
+\section{Isotropic wavelets}
+\label{sub:Isotropic}
+These wavelets are non-separable, depending on $\norm{\bm{\omega}}$. Isotropic wavelets has the same mother wavelet for each scale. In order to analyze the directionality features, the filter bank of the wavelets is convolved with other filters that gather directional information. For example the Riesz transform, see Section \ref{sec:Riesz}.
+
+\subsection{Isotropic wavelets: implemented}
+VOW, variance-optimal wavelets \cite{pad_vow:_2014} :
+\begin{equation}
+\label{VOW}
+  h(\omega) =
+    \begin{cases}
+    \begin{aligned}
+      &\sqrt{\frac{1}{2} + \frac{\tan(\kappa(1+2\log_2\frac{2\omega}{\pi})}{2\tan(\kappa)}} , &\omega \in [\frac{\pi}{4} , \frac{\pi}{2} [ \\
+      &\sqrt{\frac{1}{2} - \frac{\tan(\kappa(1+2\log_2\frac{\omega}{\pi}))}{2\tan(\kappa)}} , &\omega \in [\frac{\pi}{2} , \pi ] \\
+      &0, &\text{otherwise}
+    \end{aligned}
+    \end{cases}
+\end{equation}
+\begin{equation*}
+  \text{where } \kappa \in [0, \frac{\pi}{2}] \text{ is found to be } 0.75
+\end{equation*}
+
+Held \cite{held_steerable_2010} :
+\begin{equation}
+\label{Held}
+  h(\omega) =
+    \begin{cases}
+    \begin{aligned}
+&\cos\left(2\pi q_n(\frac{\omega}{2\pi})\right) , &\omega \in ]\frac{\pi}{4} , \frac{\pi}{2} ] \\
+  &\sin\left(2\pi q_n(\frac{\omega}{4\pi})\right) , &\omega \in ]\frac{\pi}{2} , \pi ] \\
+      &0, &\text{otherwise}
+    \end{aligned}
+    \end{cases}
+\end{equation}
+\begin{equation*}
+  \text{where } q_n \in [0,0] \text{ is a polynomial function of order n } %TODO q
+\end{equation*}
+% \section{Testing listing}
+% HOLAAA
+% \begin{lstlisting}
+% #include <iostream>
+% // A comment
+% int main()
+% {
+%    std::cout << "Hola" << '\n';
+%    return 0;
+%
+% }
+% \end{lstlisting}
+
+\section{Riesz transform: A generalization of the Hilbert transform}
+\label{sec:Riesz}
+
+Isotropic Wavelets can be coupled with Riesz operator:
+\begin{equation}
+\bm{\mathcal{R}} f(\bm{x}) =
+  \begin{pmatrix}
+    \mathcal{R}_{1} f(\bm{x}) \\
+    \vdots \\
+    \mathcal{R}_D f(\bm{x})
+  \end{pmatrix}
+  \hspace{0.6cm}
+  \xleftrightarrow[\mathcal{F}^{-1}]{\hspace{0.4cm}\mathcal{F}\hspace{0.4cm}}
+  \hspace{0.6cm}
+  \bm{\hat{\mathcal{R}}}\hat{f}(\bm{\omega}) = -j \frac{\bm{\omega}}{\norm{\bm{\omega}}}\hat{f}(\bm{\omega})
+\end{equation}
+where D is the image dimension, $j=\sqrt{-1}$ and $\mathcal{F}, \mathcal{F}^{-1}$ are the forward and inverse Fourier Transform.
+The Riesz transform is the generalization of the Hilbert transform, which is the case for $D=1$. The Hilbert transform $\mathcal{H}$ is used to generate the \textit{analytic signal} in 1D, which is the base to perform phase analysis of the original signal.
+\begin{equation}
+\label{eq:analytic-signal}
+\begin{aligned}
+  f_a(x) &= f(x) + j \mathcal{H}f(x) \\
+  \mathcal{H}f(x) = (h * f)(x)
+  \hspace{0.6cm}
+  &\xleftrightarrow[\mathcal{F}^{-1}]{\hspace{0.4cm}\mathcal{F}\hspace{0.4cm}}
+  \hspace{0.6cm}
+  \hat{\mathcal{H}}\hat{f}(\omega) = -jsgn(\omega)\hat{f}(\omega) = -j \frac{\omega}{\abs{\omega}}\hat{f}(\omega)
+\end{aligned}
+\end{equation}
+
+\section{Isotropic Wavelet Pyramid}
+\label{sec:Pyramid}
+
+\subsection{Choosing an isotropic wavelet}
+\label{sub:Choosing}
+
+\subsection{Forward / Analysis}
+\label{sub:Forward}
+
+\subsection{Inverse / Reconstruction}
+\label{sub:Inverse}
+
+\section{Riesz analysis on wavelet pyramid}
+\doxygen{ImageToImageFilter}
+
+LaTeX macros are also available for typesetting code in familiar courier fonts.
+Like the following method of an ITK class.
+
+\code{SetNumberOfIterations()}
+
+
+
+% The preceding sections will have been written in a gentler,
+% introductory style.  You may also wish to include a reference
+% section, documenting all the functions/exceptions/constants.
+% Often, these will be placed in separate files and input like this:
+
+
+
+\appendix
+
+\section{This is an Appendix}
+
+To create an appendix in a Insight HOWTO document, use markup like
+this:
+
+\begin{verbatim}
+\appendix
+
+\section{This is an Appendix}
+
+To create an appendix in a Insight HOWTO document, ....
+
+
+\section{This is another}
+
+Just add another \section{}, but don't say \appendix again.
+\end{verbatim}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%  Example on how to insert a figure
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{figure}
+\center
+\includegraphics[width=0.8\textwidth]{RegistrationComponentsDiagram.eps}
+\itkcaption[Registration Framework Components]{The basic components of the
+registration framework are two input images, a transform, a metric, an
+interpolator and an optimizer.}
+\label{fig:RegistrationComponents}
+\end{figure}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%  Example on how to insert an equation.
+%  Never forget to put an equation in your paper.
+%  They make them look professional and impress the reviewers.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+To support shape-guidance, the generic level set equation
+(Eqn(~\ref{eqn:ShapeInfluenceTerm})) is extended to incorporate a shape guidance
+term:
+
+\begin{equation}
+\label{eqn:ShapeInfluenceTerm}
+\xi \left(\psi^{*}(\mathbf{x}) - \psi(\mathbf{x})\right)
+\end{equation}
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%  Insert the bibliography using BibTeX
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\nocite{*} % Print all bib.
+\bibliographystyle{unsrt}
+\bibliography{Wavelet}
+
+
+\end{document}
