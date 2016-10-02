@@ -1,0 +1,37 @@
+\providecommand*{\xMin}{}%
+\providecommand*{\xMax}{}%
+\providecommand*{\yMin}{}%
+\providecommand*{\yMax}{}%
+\renewcommand*{\xMin}{0}%
+\renewcommand*{\xMax}{4}%
+\renewcommand*{\yMin}{0}%
+\renewcommand*{\yMax}{4}%
+\begin{tikzpicture}
+  \draw [very thin,gray] (\xMax,\yMin) -- (\xMax,15/4)  node [below] at (0,1){};
+%First block (low resolution)
+%h
+  \draw [very thin,gray] (\xMin,1/4) -- (\xMax,1/4)  node [below] at (0,1){};
+%h
+  \draw [very thin,gray] (\xMin,3/4) -- (\xMax,3/4)  node [below] at (0,1){};
+  % \draw [very thin,gray] (\xMin,1) -- (\xMax,1)  node [below] at (0,1){};
+  \draw [very thin,gray] (2,1/4) -- (2,3/4)  node [below] at (2,0){};
+%h
+  \draw [very thin,gray] (\xMin,7/4) -- (\xMax,7/4)  node [below] at (0,1){};
+%v
+  \draw [very thin,gray] (1,3/4) -- (1,7/4)  node [below] at (2,0){};
+  \draw [very thin,gray] (2,3/4) -- (2,7/4)  node [below] at (2,0){};
+  \draw [very thin,gray] (3,3/4) -- (3,7/4)  node [below] at (2,0){};
+%h
+  \draw [very thin,gray] (\xMin,15/4) -- (\xMax,15/4)  node [below] at (0,1){};
+%v
+  \draw [very thin,gray] (0.5,7/4) -- (0.5,15/4)  node [below] at (2,0){};
+  \draw [very thin,gray] (1,7/4) -- (1,15/4)  node [below] at (2,0){};
+  \draw [very thin,gray] (1.5,7/4) -- (1.5,15/4)  node [below] at (2,0){};
+  \draw [very thin,gray] (2,7/4) -- (2,15/4)  node [below] at (2,0){};
+  \draw [very thin,gray] (2.5,7/4) -- (2.5,15/4)  node [below] at (2,0){};
+  \draw [very thin,gray] (3,7/4) -- (3,15/4)  node [below] at (2,0){};
+  \draw [very thin,gray] (3.5,7/4) -- (3.5,15/4)  node [below] at (7/4,0){};
+
+  \draw [<->,thick] (\yMin,\yMax + 0.3) node (yaxis) [left] {$f$}
+    |- (\xMax + 0.3,\xMin) node (xaxis) [right] {$t$};
+\end{tikzpicture}

@@ -21,11 +21,20 @@
         commentstyle=\color{mygreen},
         morecomment=[l][\color{magenta}]{\#}
 }
+\usepackage{amssymb}
 \usepackage{amsmath}
+\usepackage{amsthm}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{remark}{Remark}
 \usepackage{commath} % defines abs, norm, vec, etc
 \usepackage{mathtools} % complex arrows
 \usepackage{bm} %easy usage of bold in math mode
-
+\usepackage{caption} %setup of captions
+\usepackage{tikz}
+\usetikzlibrary{external}
+\tikzexternalize[prefix=tikz/]
+% \graphicspath{ {tikz/} }
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 %  hyperref should be the last package to be loaded.
@@ -42,7 +51,7 @@ colorlinks,linkcolor={blue},citecolor={blue},urlcolor={blue}
 
 % The title should be descriptive enough for people to be able to find
 % the relevant document.
-\title{Module itkWavelets: Isotropic Wavelets in the frequency domain.}
+\title{Isotropic Wavelets in the frequency domain and multiscale phase analysis with the Monogenic signal}
 
 %
 % NOTE: This is the last number of the "handle" URL that
@@ -54,10 +63,11 @@ colorlinks,linkcolor={blue},citecolor={blue},urlcolor={blue}
 
 % Increment the release number whenever significant changes are made.
 % The author and/or editor can define 'significant' however they like.
-\release{0.01}
+\release{0.02}
 
 % At minimum, give your name and an email address.  You can include a
 % snail-mail address if you like.
+%\href{http://www.biophysics.ac.nz/}{Biophysics Group}
 \author{P. H. Cerdan $^{1,2}$}
 \authoraddress{$^{1}$ Institute of Fundamental Sciences, Massey University, New Zealand\\
   $^{2}$ p.hernandezcerdan@massey.ac.nz}
@@ -113,30 +123,96 @@ publications must facilitate reproducibility of the reported results.
 
 \section{Introduction to Wavelet decomposition}
 \label{sec:Intro}
-Some references
+Learning about wavelets from research papers is hard. The topic is rich and deep, the same tool but with different names have span different research fields, from theoretical physics, to seismology, and signal processing.
+
+\subsection{Motivation: spatial and frequency resolution}
+\label{sub:Motivation}
+Initially, wavelets share the same motivation than the short-time FFT, or the windowed Fourier transform: get a representation of the signal/image/function that is well localized in space \textbf{and} frequency domains. Heisenberg Uncertainty principle applies here and it is called the Heisenberg-Gabor limit: $\Delta t \cdot \Delta f \geq \frac{1}{4\pi}$, limiting the simultaneous resolution in time-frequency.
+The Fourier transform, which is the representation of the signal in the basis of harmonic functions $\{\sin(f),\cos(f)\}\ \forall f \in \mathbb{R}$, is completely localized in frequency $\Delta f = 0$, but has global support in space, ie is infinitely delocalized in space $\Delta t = \infinity$. For example, signals occurring only in one time lapse, can not be differentiated from the same signal spanning the whole time, so they will share the same spectrum representation. In the same line, non-stationary signals which frequency depends on time will give a spectrum where all those frequencies are represented, but there is no information about when, in time, the change of frequency occurred.  TODO: insert python graph here with a non-stationary function and same FFT.
+
+The short-time FFT add time localization dividing the original signal in small, consecutive segments, and applying the FFT to each of those. The problem with this approach, is that events shorter than the time window are still not resolved, the width of the segment is constant, and the frequency resolution has decreased due to the reduced size of the segment. Also it is computationally expensive.\\
+\begin{figure}[!htb]
+  \centering
+    \begin{minipage}[t]{.33\textwidth}
+        \centering
+        \input{tikz/freq_time_grid1.tex}
+        \captionsetup{width=0.8\textwidth}
+        \caption{Fourier Transform, time resolution is the duration of the signal.}
+        \label{fig:grid_fft}
+    \end{minipage}%
+    \begin{minipage}[t]{.33\textwidth}
+        \centering
+        \input{tikz/freq_time_grid2.tex}
+        \captionsetup{width=0.8\textwidth}
+        \caption{Windowed-FFT or Short-Time-FFT, fixed width window}
+        \label{fig:grid_windowed}
+    \end{minipage}
+    \begin{minipage}[t]{.33\textwidth}
+        \centering
+        \input{tikz/freq_time_grid3.tex}
+        \captionsetup{width=0.8\textwidth}
+        \caption{Discrete Wavelet Transform. Adaptive window. Better time resolution at high frequencies.}
+        \label{fig:grid_wavelet}
+    \end{minipage}
+\end{figure}
+
+\subsection{Dilation and translation operators}
+The wavelet transform is a translation of a dilation on a function $\psi$, that it is called the mother wavelet. Each dilation change of scale. The wavelet coefficient at each scale, and translation is:
+\begin{equation}
+  \psi_{s,l}(\bm{x}) = \text{det}|\bm{A}|^{-1/2}\psi(\bm{A}^s\bm{x} - \bm{l})
+\end{equation}
+
+\begin{definition}
+  Given a function $f \in \mathbb{R}$ we define the following operators. From \cite{heil_continuous_1989} \par
+  \begin{tabular}{lll}
+    Dilation:&  $D_a f(x):=\abs{a}^{-1/2}f(x/a)$ &for $a \in \mathbb{R}\backslash\{0\}$ \\
+    Translation:&   $T_b f(x):=f(x-b)$ &for $b \in \mathbb{R}$ \\
+  \end{tabular}
+\end{definition}
+
+\begin{definition}[$\mathbb{R}^n$]
+  Given $f \in \mathcal{L}^2(\mathbb{R}^n), f:\mathbb{R}^n \rightarrow \mathbb{R}$, $\bm{x}\in\mathbb{R}^n$, the dilation scalar $a$ is replaced by a dilation matrix $\bm{A} = \bm{a} \bm{I}_n$. The dilation matrix $\bm{A}$ is expansive, having all its eigenvalues $\abs{\lambda_i} > 1$, so it is invertible. For the translation operator, the scalar $b$ is replaced for the vector $\bm{b}$.\\
+  \begin{tabular}{lll}
+    Dilation:& $D_a f(\bm{x}):=\text{det}|\bm{A}|^{-1/2}f(\bm{A}\bm{x})$ &$\bm{A} \text{ expansive matrix}$\\
+    Translation:&   $T_b f(\bm{x}):=f(\bm{x}-\bm{b})$ &for $\bm{b} \in \mathbb{R}^n$ \\
+  \end{tabular}
+\end{definition}
+
+\section{Wavelet transformation}
+Motivation: Fourier and Windowed Fourier. Heisenberg.
+\begin{enumerate}
+  \item Dilation Equation. Operator D
+  \item Operator T. Translation.
+  \item Wavelet Coefficients, basis, orthonormal, frames, oversample
+  \item Multiscale methods, pyramid, Meyer. Analysis and reconstruction.
+\end{enumerate}
+
 \section{Isotropic wavelets}
 \label{sub:Isotropic}
 These wavelets are non-separable, depending on $\norm{\bm{\omega}}$. Isotropic wavelets has the same mother wavelet for each scale. In order to analyze the directionality features, the filter bank of the wavelets is convolved with other filters that gather directional information. For example the Riesz transform, see Section \ref{sec:Riesz}.
 
 \subsection{Isotropic wavelets: implemented}
-VOW, variance-optimal wavelets \cite{pad_vow:_2014} :
-\begin{equation}
+\noindent\begin{minipage}[t]{0.49\textwidth}
+  \textbf{VOW}, variance-optimal wavelets \cite{pad_vow:_2014} :
+\begin{equation*}
 \label{VOW}
   h(\omega) =
     \begin{cases}
     \begin{aligned}
-      &\sqrt{\frac{1}{2} + \frac{\tan(\kappa(1+2\log_2\frac{2\omega}{\pi})}{2\tan(\kappa)}} , &\omega \in [\frac{\pi}{4} , \frac{\pi}{2} [ \\
+      &\sqrt{\frac{1}{2} + \frac{\tan(\kappa(1+2\log_2\frac{2\omega}{\pi}))}{2\tan(\kappa)}} , &\omega \in [\frac{\pi}{4} , \frac{\pi}{2} [ \\
       &\sqrt{\frac{1}{2} - \frac{\tan(\kappa(1+2\log_2\frac{\omega}{\pi}))}{2\tan(\kappa)}} , &\omega \in [\frac{\pi}{2} , \pi ] \\
       &0, &\text{otherwise}
     \end{aligned}
     \end{cases}
-\end{equation}
+\end{equation*}
 \begin{equation*}
   \text{where } \kappa \in [0, \frac{\pi}{2}] \text{ is found to be } 0.75
 \end{equation*}
-
-Held \cite{held_steerable_2010} :
-\begin{equation}
+\newline
+\end{minipage}
+\noindent\begin{minipage}[t]{0.49\textwidth}
+  \textbf{Held} \cite{held_steerable_2010} :
+\begin{equation*}
 \label{Held}
   h(\omega) =
     \begin{cases}
@@ -146,10 +222,37 @@ Held \cite{held_steerable_2010} :
       &0, &\text{otherwise}
     \end{aligned}
     \end{cases}
-\end{equation}
-\begin{equation*}
-  \text{where } q_n \in [0,0] \text{ is a polynomial function of order n } %TODO q
 \end{equation*}
+\begin{equation*}
+  \text{where } q_n \text{ is a polynomial function of order n } %TODO q
+\end{equation*}
+\end{minipage}
+\noindent\begin{minipage}[t]{0.49\textwidth}
+  \textbf{Simoncelli} \cite{portilla_image_2000, simoncelli_steerable_1995} :
+\begin{equation*}
+\label{Simoncelli}
+  h(\omega) =
+    \begin{cases}
+    \begin{aligned}
+  &\cos\left(\frac{\pi}{2} \log_2\frac{2\omega}{\pi}\right) , &\omega \in ]\frac{\pi}{4} , \frac{\pi}{2} ] \\
+  &0, &\text{otherwise}
+    \end{aligned}
+    \end{cases}
+\end{equation*}
+\end{minipage}
+\noindent\begin{minipage}[t]{0.49\textwidth}
+\textbf{Shannon:}
+\begin{equation*}
+\label{Shannon}
+  h(\omega) =
+    \begin{cases}
+    \begin{aligned}
+  &1, &\omega \in [\frac{\pi}{2} , \pi ] \\
+  &0, &\text{otherwise}
+    \end{aligned}
+    \end{cases}
+\end{equation*}
+\end{minipage}
 % \section{Testing listing}
 % HOLAAA
 % \begin{lstlisting}
@@ -163,10 +266,14 @@ Held \cite{held_steerable_2010} :
 % }
 % \end{lstlisting}
 
-\section{Riesz transform: A generalization of the Hilbert transform}
+\section{Multiscale Phase Analyis with the Riesz transform: A generalization of the Hilbert transform}
 \label{sec:Riesz}
+The forward or analysis wavelet pyramid outputs a set of wavelet coefficients with information about each scale.
+A steerable filter \cite{held_steerable_2010, unser_steerable_2011, simoncelli_steerable_1995} can be applied to the output of the wavelet pyramid. This is the main purpose of the isotropy of the mother wavelet, the steerable filter is used to select the orientation where the feature of interest is maximum.
 
-Isotropic Wavelets can be coupled with Riesz operator:
+There are mathematical constraints in the steerable filters that can be coupled with the wavelet pyramid. Read more: \cite{unser_multiresolution_2009, unser_steerable_2011}.
+
+One of the transform that can be coupled to the pyramid is the Riesz transform $\bm{\mathcal{R}}$
 \begin{equation}
 \bm{\mathcal{R}} f(\bm{x}) =
   \begin{pmatrix}
@@ -193,34 +300,60 @@ The Riesz transform is the generalization of the Hilbert transform, which is the
 \end{aligned}
 \end{equation}
 
-\section{Isotropic Wavelet Pyramid}
-\label{sec:Pyramid}
+The same approach is used in ND using the Riesz transform in every dimension.
+The analogous to the analytical signal is now a D+1 set called the \textbf{Monogenic signal}\cite{felsberg_monogenic_2001, kovesi_peters_????}.
+\begin{equation}
+  f_m = \{f, \mathcal{R}_1, ..., \mathcal{R}_D\}
+\end{equation}
 
+\section{Implementation Details}
+\label{sec:Impl}
+\subsection{Summary}
+\label{sub:Summary}
+
+Input to filters in this module needs to be in the dual space (frequency). Usually from the output of a forward FFT \doxygen{ForwardFFTImageFilter} The decision is based on performance and accuracy, avoiding expensive convolution operations.
+
+Also because we work in the frequency space, we add a \doxygen{FrequencyShrinker} and a \doxygen{FrequencyExpander} \textbf{without} any interpolation. The shrinker chops the high frequency pixels of the image. And the expander adds zeros in the higher frequency bins. Also note that these filters don't assume that the complex input is hermitian, so they can be used with any complex input not necessarily derived from a real space image.
+
+Every filter that uses the frequency value of a pixel can be templated with a \doxygen{FrequencyImageRegionIterator}.\newline
+This iterator just add  a method \lstinline[columns=fixed]{GetFrequencyIndex()} to a regular \doxygen{ImageRegionIterator}, helping to abstract any complexity about the frequency layout into the iterator. By layout meaning the index of the pixels storing the value of the DC component (0 frequency), low/high frequency regions, or highest/Nyquist frequency. Also this layout can change depending on the parity of the image, or the library chosen to perform the Fourier Transform. For example, the python package performing a FFT generate a different frequency layout than the same transform from VNL or FFTW libraries. Even when the results are equivalent. At the time of writing, a frequency iterator for the layout of the FFTW library has been added. (TODO: VNL might share the same layout than FFTW but further testing or confirmation is required).\newline
+This abstraction will hopefully facilitate the implementation of further filters manipulating images in the frequency domain.
+
+The next section deals with the Wavelet Pyramid that generates wavelet coefficients for each level (equal to the number of M-bands per level, more later).  The pyramid is redundant, and perfect reconstruction of the original input can be achieved using the inverse Wavelet transform.
+
+The Wavelet Transform is templated over an IsotropicWavelet chosen by the user through a \doxygen{WaveletFilterBankGenerator}
+
+The wavelet coefficients from the forward pyramid can be manipulated to perform further image analysis, for example edge detection, denoise, phase analysis for feature detection, etc.
+
+This module also implements a couple of PhaseAnalyzers that can be used on every wavelet coefficient to perform multi-scale feature detection. It is based on the Riesz Transform and the Monogenic Signal \cite{felsberg_monogenic_2001,unser_multiresolution_2009}.
+One of the phase analyzer use the steerability of the Riesz transform to select the orientation of max response \cite{held_steerable_2010,unser_steerable_2011}.
+
+\section{A guided example:}
+I recommend the reader interested in extend this module to have a look to the tests for more usage options.
+\subsection{Input in the frequency space.}
+The input for the \doxygen{WaveletFrequencyForward} has to be a complex image of float pixel type. If the input is a real image, this representation is generated from a forward FFT , \doxygen{ForwardFFTImageFilter}.
+Perform an FFT. Select of the layout.
+Problems with FFTPad, negative index does not work well with neighbour iterators. Solvable.
 \subsection{Choosing an isotropic wavelet}
 \label{sub:Choosing}
+Through a WaveletFilterBankGenerator. See available options \ref{sub:Isotropic}
+Note that the frequency input must be in Hz, not in rad/sec. A method: TODOTODODO
+All the isotropic wavelets developed form a frame with tight support (?), but their wavelet basis might not be orthogonal, and the span of the basis is usually oversampled. (TODOTODO Check this.)
+\subsection{Wavelet Pyramid}
+\label{sub:Pyramid}
 
 \subsection{Forward / Analysis}
 \label{sub:Forward}
 
+\subsection{PhaseAnalyzer}
+
 \subsection{Inverse / Reconstruction}
 \label{sub:Inverse}
-
-\section{Riesz analysis on wavelet pyramid}
-\doxygen{ImageToImageFilter}
-
-LaTeX macros are also available for typesetting code in familiar courier fonts.
-Like the following method of an ITK class.
-
-\code{SetNumberOfIterations()}
-
-
 
 % The preceding sections will have been written in a gentler,
 % introductory style.  You may also wish to include a reference
 % section, documenting all the functions/exceptions/constants.
 % Often, these will be placed in separate files and input like this:
-
-
 
 \appendix
 
@@ -249,16 +382,6 @@ Just add another \section{}, but don't say \appendix again.
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\begin{figure}
-\center
-\includegraphics[width=0.8\textwidth]{RegistrationComponentsDiagram.eps}
-\itkcaption[Registration Framework Components]{The basic components of the
-registration framework are two input images, a transform, a metric, an
-interpolator and an optimizer.}
-\label{fig:RegistrationComponents}
-\end{figure}
-
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -278,9 +401,6 @@ term:
 \xi \left(\psi^{*}(\mathbf{x}) - \psi(\mathbf{x})\right)
 \end{equation}
 
-
-
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 %  Insert the bibliography using BibTeX
@@ -288,7 +408,9 @@ term:
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \nocite{*} % Print all bib.
 \bibliographystyle{unsrt}
+\twocolumn
 \bibliography{Wavelet}
+\onecolumn
 
 
 \end{document}

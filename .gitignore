@@ -1,9 +1,14 @@
+#Ignore build folder
+build**/
+
 #Ignore output folder.
 **/output/
 ## vim
 *.swp
 **/Session.vim
 *~*
+## Tikz externalize files
+*.dpth
 ## Core latex/pdflatex auxiliary files:
 *.aux
 *.lof

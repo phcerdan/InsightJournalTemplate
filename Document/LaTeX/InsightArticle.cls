@@ -10,8 +10,8 @@
 %  Change this to say a4paper instead of letterpaper if you want A4.  These
 %  are the latex defaults.
 %
-\newcommand{\itk@paper}{letterpaper}
-\newcommand{\itk@ptsize}{11pt}
+\newcommand{\itk@paper}{a4}
+\newcommand{\itk@ptsize}{10pt}
 
 
 %
