@@ -306,6 +306,37 @@ The analogous to the analytical signal is now a D+1 set called the \textbf{Monog
   f_m = \{f, \mathcal{R}_1, ..., \mathcal{R}_D\}
 \end{equation}
 
+\subsection{Generalized Riesz Transform}
+The Riesz transform will map any frame of $L_2(\mathbb{R}^d)$ into another one \cite{held_steerable_2010, unser_wavelet_2010}.\\
+\begin{definition}[Frame]
+  A frame of $L_2(\mathbb{R}^d)$ is a family of functions $\{\phi_{\bm{k}}\}_{ \bm{k}\in\mathbb{Z}^d}$ if and only if there exists two positive constants A, B $< \infinity$ such that:
+
+\begin{equation}
+  \forall f \in L_2(\mathbb{R}^d), A\norm{f}^2 \le \sum_{\bm{k}\in\mathbb{Z}^d}\abs{\langle\phi_{\bm{k}},f\rangle}^2 \le B\norm{f}^2
+\end{equation}
+
+The frame is \textit{tight} if $A=B$. If $A=B=1$ we have a \textit{Parseval frame} that satisfies the decomposition/reconstruction formula:
+\begin{equation}
+  \forall f \in L_2(\mathbb{R}^d), f = \sum_{\bm{k}\in\mathbb{Z}^d}\langle\phi_{\bm{k}},f\rangle \cdot \phi_{\bm{k}}
+\end{equation}
+which has the same form than the expansion using an orthonormal basis, however in the frame generalization, the family $\phi_{\bm{k}}$ may be redundant.
+\end{definition}
+
+\subsection{Generalized Steerable Framework}
+Simoncelli \cite{simoncelli_steerable_1995} coupled the multiresolution analysis using wavelets with the steerable concept developed years before \cite{freeman_design_1991}. A steerable framework can be used with polar separable functions. In this case, the radial part of the function has to be calculated only once, and the polar part has only to be computed in those directions that constitute a basis of the space. After this, the filter can be oriented, or steered to any direction, using a weighted linear combination of the basis. This approach gives a directional analysis but keeping it computationally performant.
+
+The steerable framework can be combined with wavelets when these are isotropic, which implies polar separability.
+Simoncelli's framework has been used in a lot of 2D applications. Chenouard, Unser \cite{held_steerable_2010,unser_steerable_2011,chenouard_3d_2012} proposed a generalization to 3D of the steerable framework using rotation matrices.
+
+\begin{definition}
+A function $f$ is steerable in three dimensions if it can be expressed as:
+\begin{equation}
+  f(\bm{Rx}) = \sum_{m=1}^M k_m(\bm{R})g_m(\bm{x})
+\end{equation}
+where $\bm{x} = (x_1,x_2,x_3)$ is any 3D vector in Cartesian coordinates and $\bm{R}$ is any rotation matrix in three dimensions.
+$\{g_m\}_{m=1...M}$ is the set of primary functions, ie , a basis, and $\{k_m\}_{m=1...M}$ is a set of interpolation functions with $M < \infinity$.
+\end{definition}
+
 \section{Implementation Details}
 \label{sec:Impl}
 \subsection{Summary}
