@@ -9,6 +9,8 @@
 \documentclass{InsightArticle}
 \usepackage[dvips]{graphicx}
 
+\usepackage{float}
+\usepackage{subcaption}
 \usepackage{color}
 \definecolor{mygreen}{rgb}{0,0.6,0}
 \definecolor{mygray}{rgb}{0.5,0.5,0.5}
@@ -51,7 +53,7 @@ colorlinks,linkcolor={blue},citecolor={blue},urlcolor={blue}
 
 % The title should be descriptive enough for people to be able to find
 % the relevant document.
-\title{Isotropic Wavelets in the frequency domain and multiscale phase analysis with the Monogenic signal}
+\title{Isotropic and Steerable Wavelets in N-Dimensions. A multiresolution analysis framework.}
 
 %
 % NOTE: This is the last number of the "handle" URL that
@@ -63,7 +65,7 @@ colorlinks,linkcolor={blue},citecolor={blue},urlcolor={blue}
 
 % Increment the release number whenever significant changes are made.
 % The author and/or editor can define 'significant' however they like.
-\release{0.02}
+\release{0.3}
 
 % At minimum, give your name and an email address.  You can include a
 % snail-mail address if you like.
@@ -105,10 +107,14 @@ colorlinks,linkcolor={blue},citecolor={blue},urlcolor={blue}
 
 \begin{abstract}
 \noindent
-This document describes the implementation of isotropic wavelets in the frequency domain, this is part of the module itkWavelets,
-and also serve as an introduction to these Wavelets.
+This document describes the implementation of a multiresolution analsyis framework using isotropic and steerable wavelets in the frequency domain.
 
-A Riesz operator filter is also provided that couples with the wavelet analysis and provides \textbf{TODO} to the isotropic framework.
+It also aims to serve as an introduction to these radial wavelets, hopefully providing a bridge between introductory books and research papers on the subject.
+
+The implementation is based on the original research made through the years by: Freeman, Adelman, Simoncelli, Kovasi, and specially on recent studies by Held, Chenouard, Van de Ville and Unser.
+
+The backbone of the multiscale analysis is provided by the Isotropic Wavelets, and the detection of directional features is provided by coupling it with a generalized Riesz transform.
+The generalized Riesz transform of order N behaves like a smoothed version of the Nth order derivatives of the signal. Also, it is steerable: its components impulse responses can be rotated to any spatial orientation.
 
 This paper is accompanied with the source code, input data, parameters and
 output data that the author used for validating the algorithm described in
@@ -128,32 +134,37 @@ Learning about wavelets from research papers is hard. The topic is rich and deep
 \subsection{Motivation: spatial and frequency resolution}
 \label{sub:Motivation}
 Initially, wavelets share the same motivation than the short-time FFT, or the windowed Fourier transform: get a representation of the signal/image/function that is well localized in space \textbf{and} frequency domains. Heisenberg Uncertainty principle applies here and it is called the Heisenberg-Gabor limit: $\Delta t \cdot \Delta f \geq \frac{1}{4\pi}$, limiting the simultaneous resolution in time-frequency.
-The Fourier transform, which is the representation of the signal in the basis of harmonic functions $\{\sin(f),\cos(f)\}\ \forall f \in \mathbb{R}$, is completely localized in frequency $\Delta f = 0$, but has global support in space, ie is infinitely delocalized in space $\Delta t = \infinity$. For example, signals occurring only in one time lapse, can not be differentiated from the same signal spanning the whole time, so they will share the same spectrum representation. In the same line, non-stationary signals which frequency depends on time will give a spectrum where all those frequencies are represented, but there is no information about when, in time, the change of frequency occurred.  TODO: insert python graph here with a non-stationary function and same FFT.
+The Fourier transform, which is the representation of the signal in the basis of harmonic functions $\{\sin(f),\cos(f)\}\ \forall f \in \mathbb{R}$, is completely localized in frequency $\Delta f = 0$, but has global support in space, ie is infinitely delocalized in space $\Delta t = \infinity$.
 
-The short-time FFT add time localization dividing the original signal in small, consecutive segments, and applying the FFT to each of those. The problem with this approach, is that events shorter than the time window are still not resolved, the width of the segment is constant, and the frequency resolution has decreased due to the reduced size of the segment. Also it is computationally expensive.\\
-\begin{figure}[!htb]
-  \centering
-    \begin{minipage}[t]{.33\textwidth}
-        \centering
-        \input{tikz/freq_time_grid1.tex}
-        \captionsetup{width=0.8\textwidth}
-        \caption{Fourier Transform, time resolution is the duration of the signal.}
-        \label{fig:grid_fft}
-    \end{minipage}%
-    \begin{minipage}[t]{.33\textwidth}
-        \centering
-        \input{tikz/freq_time_grid2.tex}
-        \captionsetup{width=0.8\textwidth}
-        \caption{Windowed-FFT or Short-Time-FFT, fixed width window}
-        \label{fig:grid_windowed}
-    \end{minipage}
-    \begin{minipage}[t]{.33\textwidth}
-        \centering
-        \input{tikz/freq_time_grid3.tex}
-        \captionsetup{width=0.8\textwidth}
-        \caption{Discrete Wavelet Transform. Adaptive window. Better time resolution at high frequencies.}
-        \label{fig:grid_wavelet}
-    \end{minipage}
+A few examples to illustrate the concept: In a discrete case, such as an image, this means that the FFT has the highest resolution on frequency, but where, in the spatial domain, a specific frequency occurs is reduced to `somewhere' in the size of the image (\autoref{fig:grid_a_fft}).
+Or in signals occurring only in one time lapse: they can't be differentiated from the same signal occurring continuously, so they will share the same spectrum representation. In the same line, non-stationary signals which frequency depends on time will give a spectrum where all those frequencies are represented, but there is no information about when, in time, the change of frequency occurred.  TODO: insert python graph here with a non-stationary function and same FFT.
+
+The short-time FFT add spatial/time localization dividing the original signal in small, consecutive segments, and applying the FFT to each of those. The problem with this approach, besides being computationally expensive, is that events shorter than the time window are still not resolved and that the width of the segment is constant (\autoref{fig:grid_b_windowed}). Would it be possible to have better spatial resolution for some components of the frequency spectra, such as high frequency components (\autoref{fig:grid_c_wavelet})?
+
+\begin{figure}[H]
+  \begin{subfigure}[t]{.33\textwidth}
+    \centering
+    \input{tikz/freq_time_grid1.tex}
+    \captionsetup{width=0.8\textwidth}
+    \caption{Fourier Transform, time resolution is the duration of the signal.}
+    \label{fig:grid_a_fft}
+  \end{subfigure}
+  \begin{subfigure}[t]{.33\textwidth}
+    \centering
+    \input{tikz/freq_time_grid2.tex}
+    \captionsetup{width=0.8\textwidth}
+    \caption{Windowed-FFT or Short-Time-FFT, fixed width window}
+    \label{fig:grid_b_windowed}
+  \end{subfigure}
+  \begin{subfigure}[t]{.33\textwidth}
+    \centering
+    \input{tikz/freq_time_grid3.tex}
+    \captionsetup{width=0.8\textwidth}
+    \caption{Discrete Wavelet Transform. Adaptive window, better time resolution at high frequencies.}
+    \label{fig:grid_c_wavelet}
+  \end{subfigure}
+  \caption{Simultaneous spatial and frequency resolution of different transformations. $\Delta t, \Delta f$}
+  \label{fig:grids}
 \end{figure}
 
 \subsection{Dilation and translation operators}
