@@ -1,41 +1,59 @@
 import numpy as np
 import matplotlib.pyplot as plt
+plt.style.use('grayscale')
+plt.tight_layout()
 # t = np.linspace(np.pi, 10*np.pi,num=400, endpoint=False)
-t = np.linspace(0, 200,num=200)
+t = np.linspace(0, 600,num=600)
 # Stationary harmonic function: mono-frequency
-f = np.sin(2*np.pi*5*t)
-# Create a non-stationary function.
-f2 = np.sin(2*np.pi*15*t)
-f2[0:50] = np.sin(2*np.pi*5*t[0:50])
-f2[50:100] = np.sin(2*np.pi*10*t[0:50])
-f2[100:150] = np.sin(2*np.pi*15*t[0:50])
-f2[150:200] = np.sin(2*np.pi*20*t[0:50])
-fsum = f + f2
-pf, pa = plt.subplots(2, 3)
-# pa[0, 0].plot(t,f)
-pa[0, 0].plot(t,f2)
-pa[0, 0].set_ylabel('t domain')
-pa[0, 0].set_title('f1=sin(t), f2=sin(2pi*t)')
-pa[0, 1].plot(t,fsum)
-pa[0, 1].set_title('fsum=f1+f2')
+fLow = np.sin(6*t*np.pi/600.0)
+fHigh = np.sin(30*t*np.pi/600.0)
+fLH = fLow + fHigh
+pf, pa = plt.subplots(2, 2, sharex=True)
+
+# pa[0, 0].plot(t,fLow)
+# pa[0, 0].set_xlabel('t')
+# pa[0, 0].set_title('fLow')
+# pa[1, 0].plot(t,fHigh)
+# pa[1, 0].set_xlabel('t')
+# pa[1, 0].set_title('fHigh')
+pa[0, 0].plot(t,fLH.real)
+# pa[0, 0].set_xlabel('t')
+pa[0, 0].set_title('Time Domain')
+pa[0, 0].set_ylabel('$S_{low} + S_{high}$')
 
 freq = np.fft.fftfreq(t.shape[-1])
-ft = np.fft.fft(f)
-ft2 = np.fft.fft(f2)
-ftsum = np.fft.fft(fsum)
-# f[int(t.size*1/4):] = 0
-# f2[0:int(t.size*3/4)] = 0
-f_segment = f + f2
-pa[0, 2].plot(t,f_segment)
-pa[0, 2].set_title('f1 + A*f2')
-ft_segment = np.fft.fft(f_segment)
+fftLH = np.fft.fft(fLH)
+fftLHMagn = np.abs(fftLH)
+pa[0, 1].plot(t,fftLHMagn)
+pa[0, 1].set_title('Frequency Domain')
 
-pa[1, 0].plot(freq,ft.real,freq,ft.imag)
-pa[1, 0].plot(freq,ft2.real, freq, ft2.imag)
-pa[1, 0].set_ylabel('fft, dual space')
-pa[1, 1].plot(freq,ftsum.real, freq,ftsum.imag)
-pa[1, 2].plot(freq,ft_segment.real, freq, ft_segment.imag)
-# pf.set_figheight(40)
-# pf.set_figwidth(40)
-pf.savefig('spatial_localization_fft.pdf', bbox_inches='tight')
-plt.show()
+# Create a non-stationary function.
+fNs = np.sin(3*t*np.pi/600.0)
+fNs[0:300] = fLow[0:300] #np.sin(3*t[0:300]*np.pi/600.0)
+fNs[300:600] = fHigh[300:600] #np.sin(30*t[300:600]*np.pi/600.0)
+
+# pa[0, 0].plot(t,fNs)
+# pa[0, 0].set_title('sin(3t)')
+# pa[0, 1].plot(t,fNs)
+# pa[0, 1].set_title('fHigh=0.5*sin(30t)')
+pa[1, 0].plot(t,fNs)
+pa[1, 0].set_xlabel('$t$')
+pa[1, 0].set_ylabel('Non-stationary $S_{ns}$')
+
+fftNs= np.fft.fft(fNs)
+fftNsMagn = np.abs(fftNs)
+pa[1, 1].plot(t,fftNsMagn)
+pa[1, 1].set_xlabel('$f$')
+
+# Fine-tune figure; make subplots close to each other and hide x ticks for
+# all but bottom plot.
+pf.subplots_adjust(hspace=0.1)
+plt.setp(pf.axes[0].get_xticklabels(), visible=False)
+plt.setp(pf.axes[1].get_xticklabels(), visible=False)
+# plt.setp([a.get_xticklabels() for a in pf.axes[:-1]], visible=False)
+
+# pf.set_figheight(9.6)
+# pf.set_figwidth(12.8)
+# pf.savefig('spatial_localization_fft.pdf', bbox_inches='tight')
+# pf.savefig('spatial_localization_fft.svg', format='svg', bbox_inches='tight')
+pf.show()

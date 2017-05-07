@@ -9,8 +9,6 @@
 \documentclass{InsightArticle}
 \usepackage[dvips]{graphicx}
 
-\usepackage{float}
-\usepackage{subcaption}
 \usepackage{color}
 \definecolor{mygreen}{rgb}{0,0.6,0}
 \definecolor{mygray}{rgb}{0.5,0.5,0.5}
@@ -26,17 +24,34 @@
 \usepackage{amssymb}
 \usepackage{amsmath}
 \usepackage{amsthm}
+\usepackage{physics} % write derivatives
+\usepackage{enumitem}
 \theoremstyle{definition}
 \newtheorem{definition}{Definition}[section]
+\newtheorem{proposition}{Proposition}
 \newtheorem{remark}{Remark}
+% \newcommand{\conj}[1]{\bar{#1}}
+\newcommand{\conj}[1]{#1^{\ast}}
+\newcommand{\fft}[1]{\hat{#1}}
+\newcommand{\trans}[1]{#1^{\mathsf{T}}}
+% \let\det\undefined
+% \newcommand{\det}[1]{\text{det}|\bm{#1}|} %already  defined in physics
+\def\w{\omega} % shortcut for omega
 \usepackage{commath} % defines abs, norm, vec, etc
 \usepackage{mathtools} % complex arrows
 \usepackage{bm} %easy usage of bold in math mode
+\usepackage{float}
 \usepackage{caption} %setup of captions
+\usepackage{subcaption}
+\usepackage{pgf} % native latex from python
+\graphicspath{ {images/} }
 \usepackage{tikz}
 \usetikzlibrary{external}
 \tikzexternalize[prefix=tikz/]
 % \graphicspath{ {tikz/} }
+% \usepackage[backend=bibtex]{biblatex}
+% \usepackage{csquotes}% Recommended for biblatex
+\bibliographystyle{unsrt}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 %  hyperref should be the last package to be loaded.
@@ -78,10 +93,7 @@ colorlinks,linkcolor={blue},citecolor={blue},urlcolor={blue}
 
 %
 % Add hyperlink to the web location and license of the paper.
-% The argument of this command is the handler identifier given
-% by the Insight Journal to this paper.
-%
-\IJhandlefooter{\IJhandlerIDnumber}
+% The argument of this command is the handler identifier give\IJhandlefooter{\IJhandlerIDnumber}
 
 
 \ifpdf
@@ -109,7 +121,7 @@ colorlinks,linkcolor={blue},citecolor={blue},urlcolor={blue}
 \noindent
 This document describes the implementation of a multiresolution analsyis framework using isotropic and steerable wavelets in the frequency domain.
 
-It also aims to serve as an introduction to these radial wavelets, hopefully providing a bridge between introductory books and research papers on the subject.
+It also aims to introduce these radial wavelets, hopefully providing a bridge between introductory books and research papers on the subject.
 
 The implementation is based on the original research made through the years by: Freeman, Adelman, Simoncelli, Kovasi, and specially on recent studies by Held, Chenouard, Van de Ville and Unser.
 
@@ -129,15 +141,25 @@ publications must facilitate reproducibility of the reported results.
 
 \section{Introduction to Wavelet decomposition}
 \label{sec:Intro}
-Learning about wavelets from research papers is hard. The topic is rich and deep, the same tool but with different names have span different research fields, from theoretical physics, to seismology, and signal processing.
+Learning about wavelets from research papers is not easy. The topic is rich and deep, the same tool has spanned different research fields, from theoretical physics, to seismology and signal processing.
+Yves Meyer has won the Gauss Price (2010), and Abel Price (2017) in Mathematics for ``his pivotal role in the development of wavelets and multiresolution analysis''. The detection of Gravitational waves with the LIGO experiment involved the use of wavelets to analyse the signals.
+
+In terms of introductory books, I have found \cite{addison_illustrated_2002} to be clear and concise, with examples of applications in medical imaging, and other fields.
 
 \subsection{Motivation: spatial and frequency resolution}
 \label{sub:Motivation}
-Initially, wavelets share the same motivation than the short-time FFT, or the windowed Fourier transform: get a representation of the signal/image/function that is well localized in space \textbf{and} frequency domains. Heisenberg Uncertainty principle applies here and it is called the Heisenberg-Gabor limit: $\Delta t \cdot \Delta f \geq \frac{1}{4\pi}$, limiting the simultaneous resolution in time-frequency.
-The Fourier transform, which is the representation of the signal in the basis of harmonic functions $\{\sin(f),\cos(f)\}\ \forall f \in \mathbb{R}$, is completely localized in frequency $\Delta f = 0$, but has global support in space, ie is infinitely delocalized in space $\Delta t = \infinity$.
+Wavelets share the same motivation than the short-time FFT, or the windowed Fourier transform: get a representation of the signal/image/function that is well localized in space \textbf{and} frequency domains. Heisenberg Uncertainty principle applies here and it is called the Heisenberg-Gabor limit: $\Delta t \cdot \Delta f \geq \frac{1}{4\pi}$, limiting the simultaneous resolution of a signal in time-frequency.
+The Fourier transform, which is the representation of the signal in the basis of harmonic functions $\{\sin(f),\cos(f)\}\ \forall f \in \mathbb{R}$, is completely localized in frequency $\Delta f = 0$, but has global support in space, i.e infinitely delocalized in space $\Delta t = \infinity$.
 
-A few examples to illustrate the concept: In a discrete case, such as an image, this means that the FFT has the highest resolution on frequency, but where, in the spatial domain, a specific frequency occurs is reduced to `somewhere' in the size of the image (\autoref{fig:grid_a_fft}).
-Or in signals occurring only in one time lapse: they can't be differentiated from the same signal occurring continuously, so they will share the same spectrum representation. In the same line, non-stationary signals which frequency depends on time will give a spectrum where all those frequencies are represented, but there is no information about when, in time, the change of frequency occurred.  TODO: insert python graph here with a non-stationary function and same FFT.
+A few examples to illustrate the concept: In a discrete case, such as an image, this means that the FFT has the highest resolution on frequency, but where, in the spatial domain, a specific frequency occurs is reduced to `somewhere', bounded by the size of the image (\autoref{fig:spatial_resolution_fft}, \ref{fig:grid_a_fft}).
+Or in signals occurring only in one time-lapse: they can't be differentiated from the same signal occurring continuously, so they will share similar spectra representation (\autoref{fig:spatial_resolution_fft}). In the same line, non-stationary signals which frequency depends on time will give a spectrum where all those frequencies are represented, but there is no information about when, in time, the change of frequency occurred.
+\begin{figure}[H]
+  \centering
+  \resizebox{0.9\textwidth}{!}{\input{./figures/spatial_resolution_fft.pgf}}
+  % \input{./images/spatial_localization.pgf}
+  \caption{The FFT provides optimal frequency resolution, but misses capturing the changes of the signal in time}
+  \label{fig:spatial_resolution_fft}
+\end{figure}
 
 The short-time FFT add spatial/time localization dividing the original signal in small, consecutive segments, and applying the FFT to each of those. The problem with this approach, besides being computationally expensive, is that events shorter than the time window are still not resolved and that the width of the segment is constant (\autoref{fig:grid_b_windowed}). Would it be possible to have better spatial resolution for some components of the frequency spectra, such as high frequency components (\autoref{fig:grid_c_wavelet})?
 
@@ -167,40 +189,84 @@ The short-time FFT add spatial/time localization dividing the original signal in
   \label{fig:grids}
 \end{figure}
 
-\subsection{Dilation and translation operators}
-The wavelet transform is a translation of a dilation on a function $\psi$, that it is called the mother wavelet. Each dilation change of scale. The wavelet coefficient at each scale, and translation is:
-\begin{equation}
-  \psi_{s,l}(\bm{x}) = \text{det}|\bm{A}|^{-1/2}\psi(\bm{A}^s\bm{x} - \bm{l})
-\end{equation}
-
-\begin{definition}
-  Given a function $f \in \mathbb{R}$ we define the following operators. From \cite{heil_continuous_1989} \par
-  \begin{tabular}{lll}
-    Dilation:&  $D_a f(x):=\abs{a}^{-1/2}f(x/a)$ &for $a \in \mathbb{R}\backslash\{0\}$ \\
-    Translation:&   $T_b f(x):=f(x-b)$ &for $b \in \mathbb{R}$ \\
-  \end{tabular}
-\end{definition}
-
-\begin{definition}[$\mathbb{R}^n$]
-  Given $f \in \mathcal{L}^2(\mathbb{R}^n), f:\mathbb{R}^n \rightarrow \mathbb{R}$, $\bm{x}\in\mathbb{R}^n$, the dilation scalar $a$ is replaced by a dilation matrix $\bm{A} = \bm{a} \bm{I}_n$. The dilation matrix $\bm{A}$ is expansive, having all its eigenvalues $\abs{\lambda_i} > 1$, so it is invertible. For the translation operator, the scalar $b$ is replaced for the vector $\bm{b}$.\\
-  \begin{tabular}{lll}
-    Dilation:& $D_a f(\bm{x}):=\text{det}|\bm{A}|^{-1/2}f(\bm{A}\bm{x})$ &$\bm{A} \text{ expansive matrix}$\\
-    Translation:&   $T_b f(\bm{x}):=f(\bm{x}-\bm{b})$ &for $\bm{b} \in \mathbb{R}^n$ \\
-  \end{tabular}
-\end{definition}
-
-\section{Wavelet transformation}
-Motivation: Fourier and Windowed Fourier. Heisenberg.
 \begin{enumerate}
-  \item Dilation Equation. Operator D
-  \item Operator T. Translation.
+  \item Motivation: Fourier and Windowed Fourier. Heisenberg.
+  \item Motivation: MRA
+  \item Dilation Equation. Operator D.  Operator T. Translation.
   \item Wavelet Coefficients, basis, orthonormal, frames, oversample
   \item Multiscale methods, pyramid, Meyer. Analysis and reconstruction.
 \end{enumerate}
 
+% \subsection{Motivation: Multiresolution analysis (MRA) framework}
+% Wavelets provide a multi-resolution analysis framework
+
+\section{Wavelet transformation}
+
+Let consider the following wavelet decomposition $\forall f \in \mathcal{L}^2(\mathbb{R}^d)$
+\begin{equation}
+    f(\bm{x}) = \sum_{s \in \mathbb{Z}} \sum_{\bm{l} \in \mathbb{Z}^d} \langle f,\psi_{s,\bm{l}} \rangle \conj\psi_{s,\bm{l}}(\bm{x})
+\end{equation}
+The family of functions $\{\psi_{s,\bm{l}}\}$ is a wavelet \textit{frame}, constructed by means of \textit{translations} and \textit{dilations} of the \textit{mother wavelet} function $\psi$.
+\begin{equation}
+    \psi_{s,\bm{l}}(\bm{x}) = \abs{\det(A)}^{-s/2}\psi(A^s\bm{x} - \bm{l})
+\label{eq:wavelet-frame}
+\end{equation}
+Each dilation, defined by the dilation matrix $A$, squeezes or stretches the mother wavelet, acting as a change of scale. The translation operator moves and centers the location of the mother wavelet $\psi$. If the dilation matrix is diagonal with the same dilation factor $a$ in all dimensions, $A = a \mathcal{I}_d$, then \autoref{eq:wavelet-frame} becomes:
+\begin{equation}
+    \psi_{s,\bm{l}}(\bm{x}) = a^{-d\cdot s/2}\psi(a^s\bm{x} - \bm{l})
+\end{equation}
+
+The mother wavelet function has to have finite energy $\int_{-\infinity}^{\infinity}\abs{\psi(\bm{x})}^2 d\bm{x} < \infinity $.\newline
+
+\begin{definition}[Dilations and Translations]
+  Given a function $f\in\mathbb{R}$ we define the dilation and translation operators\cite{heil_continuous_1989}:\par
+  \begin{tabular}{lll}
+    Dilation:&  $D_a f(x):=\abs{a}^{-1/2}f(x/a)$ &for $a \in \mathbb{R}\backslash\{0\}$ \\
+    Translation:&   $T_b f(x):=f(x-b)$ &for $b \in \mathbb{R}$ \\
+  \end{tabular}
+
+  $\mathbb{R}^d$ generalization:\\
+  Given $f \in L_2(\mathbb{R}^d), f:\mathbb{R}^d \rightarrow \mathbb{R}$, $\bm{x}\in\mathbb{R}^d$, the dilation scalar $a$ is replaced by a dilation matrix $A = a \mathcal{I}_d$ \cite{qian_wavelet_2007}. The dilation matrix $A$ is expansive, having all its eigenvalues $\abs{\lambda_i} > 1$, so it is invertible. For the translation operator, the scalar $b$ is replaced for the vector $\bm{b}$.\par
+  \begin{tabular}{lll}
+    Dilation:& $D_A f(\bm{x}):=\abs{\det(A)}^{-1/2}f(A\bm{x})$ &$A \text{ expansive matrix}$\\
+    Translation:&   $T_{\bm{b}} f(\bm{x}):=f(\bm{x}-\bm{b})$ &for $\bm{b} \in \mathbb{R}^d$ \\
+  \end{tabular}
+\end{definition}
+
+\begin{definition}[Frame]
+    A family of functions $\{\phi_{\bm{k}}\}_{ \bm{k}\in\mathbb{Z}^d}$ is a \textit{frame} of $L_2(\mathbb{R}^d)$ if and only if there exists two positive constants A, B $< \infinity$ such that:
+
+\begin{equation}
+  \forall f \in L_2(\mathbb{R}^d), A\norm{f}^2 \le \sum_{\bm{k}\in\mathbb{Z}^d}\abs{\langle\phi_{\bm{k}},f\rangle}^2 \le B\norm{f}^2
+\end{equation}
+
+The frame is \textit{tight} if $A=B$. If $A=B=1$ we have a \textit{Parseval frame} that satisfies the decomposition/reconstruction formula:
+\begin{equation}
+  \forall f \in L_2(\mathbb{R}^d), f = \sum_{\bm{k}\in\mathbb{Z}^d}\langle\phi_{\bm{k}},f\rangle \cdot \phi_{\bm{k}}
+\end{equation}
+which has the same form than the expansion using an orthonormal basis, however in the frame generalization, the family $\phi_{\bm{k}}$ may be redundant.
+\end{definition}
+
+The present requirement that the mother wavelet is isotropic constraints the wavelet-design:
+\begin{proposition}
+  Conditions for the mother wavelet $\psi$ to generate a tight wavelet frame \cite{held_steerable_2010, unser_steerable_2011, chenouard_3d_2012}:\newline
+Let $h(w)$ be a radial frequency profile such that:
+\begin{description}[font=\normalfont , leftmargin=*, labelsep=*, labelindent=*]
+    \item[Condition 1:] $h(\w) = 0, \forall \w > \pi$.
+    \item[Condition 2:] $\sum_{i \in \mathbb{Z}} \abs{h\Big(\Big(\big(\trans{A}\big)^{-1}\Big)^i\w\Big)}^2 = 1$.\newline
+        If $A = a \mathcal{I}_d$: $\sum_{i \in \mathbb{Z}} \abs{h(a^i\w)}^2 = 1$. \cite{held_steerable_2010, aldroubi_wavelets_2007}
+    \item[Condition 3:] $\dv[n]{h(\w)}{\w}\Bigr|_{\w=0} = 0, \text{for } n = 0, \ldots, N$.
+\end{description}
+If the mother wavelet $\psi$ is defined by $\fft{\psi}(\bm{\w})= h(\norm{\bm{\w}})$, then it generates a tight wavelet frame in $L_2(\mathbb{R}^d)$, where $\fft{\psi}$ is the ND Fourier transform of $\psi$.
+
+\end{proposition}
+
+
+\subsection{Multiresolution: Image Pyramids}
+
 \section{Isotropic wavelets}
 \label{sub:Isotropic}
-These wavelets are non-separable, depending on $\norm{\bm{\omega}}$. Isotropic wavelets has the same mother wavelet for each scale. In order to analyze the directionality features, the filter bank of the wavelets is convolved with other filters that gather directional information. For example the Riesz transform, see Section \ref{sec:Riesz}.
+These wavelets are non-separable in Cartesian coordinates, depending on $\norm{\bm{\omega}}$. Isotropic wavelets have the same mother wavelet for each scale. In order to analyze the directionality features, the filter bank of the wavelets is convolved with other filters that gather directional information. For example the Riesz transform, see Section \ref{sec:Riesz}.
 
 \subsection{Isotropic wavelets: implemented}
 \noindent\begin{minipage}[t]{0.49\textwidth}
@@ -320,7 +386,7 @@ The analogous to the analytical signal is now a D+1 set called the \textbf{Monog
 \subsection{Generalized Riesz Transform}
 The Riesz transform will map any frame of $L_2(\mathbb{R}^d)$ into another one \cite{held_steerable_2010, unser_wavelet_2010}.\\
 \begin{definition}[Frame]
-  A frame of $L_2(\mathbb{R}^d)$ is a family of functions $\{\phi_{\bm{k}}\}_{ \bm{k}\in\mathbb{Z}^d}$ if and only if there exists two positive constants A, B $< \infinity$ such that:
+    A family of functions $\{\phi_{\bm{k}}\}_{ \bm{k}\in\mathbb{Z}^d}$ is a \textit{frame} of $L_2(\mathbb{R}^d)$ if and only if there exists two positive constants A, B $< \infinity$ such that:
 
 \begin{equation}
   \forall f \in L_2(\mathbb{R}^d), A\norm{f}^2 \le \sum_{\bm{k}\in\mathbb{Z}^d}\abs{\langle\phi_{\bm{k}},f\rangle}^2 \le B\norm{f}^2
@@ -337,7 +403,7 @@ which has the same form than the expansion using an orthonormal basis, however i
 Simoncelli \cite{simoncelli_steerable_1995} coupled the multiresolution analysis using wavelets with the steerable concept developed years before \cite{freeman_design_1991}. A steerable framework can be used with polar separable functions. In this case, the radial part of the function has to be calculated only once, and the polar part has only to be computed in those directions that constitute a basis of the space. After this, the filter can be oriented, or steered to any direction, using a weighted linear combination of the basis. This approach gives a directional analysis but keeping it computationally performant.
 
 The steerable framework can be combined with wavelets when these are isotropic, which implies polar separability.
-Simoncelli's framework has been used in a lot of 2D applications. Chenouard, Unser \cite{held_steerable_2010,unser_steerable_2011,chenouard_3d_2012} proposed a generalization to 3D of the steerable framework using rotation matrices.
+Simoncelli's framework has been used in a lot of 2D applications. Freeman in its seminal work \cite{freeman_design_1991} wrote a generalized version for any dimension, but it was lately, Chenouard and Unser \cite{held_steerable_2010,unser_steerable_2011,chenouard_3d_2012} who used rotation matrices in 3D.
 
 \begin{definition}
 A function $f$ is steerable in three dimensions if it can be expressed as:
@@ -355,10 +421,10 @@ $\{g_m\}_{m=1...M}$ is the set of primary functions, ie , a basis, and $\{k_m\}_
 
 Input to filters in this module needs to be in the dual space (frequency). Usually from the output of a forward FFT \doxygen{ForwardFFTImageFilter} The decision is based on performance and accuracy, avoiding expensive convolution operations.
 
-Also because we work in the frequency space, we add a \doxygen{FrequencyShrinker} and a \doxygen{FrequencyExpander} \textbf{without} any interpolation. The shrinker chops the high frequency pixels of the image. And the expander adds zeros in the higher frequency bins. Also note that these filters don't assume that the complex input is hermitian, so they can be used with any complex input not necessarily derived from a real space image.
+Also, because we work in the frequency space, we add a \doxygen{FrequencyShrinker} and a \doxygen{FrequencyExpander} \textbf{without} any interpolation. The shrinker chops the high frequency pixels of the image. And the expander adds zeros in the higher frequency bins. These filters don't assume that the complex input is hermitian, so they can be used with any complex input not necessarily derived from a real space image.
 
 Every filter that uses the frequency value of a pixel can be templated with a \doxygen{FrequencyImageRegionIterator}.\newline
-This iterator just add  a method \lstinline[columns=fixed]{GetFrequencyIndex()} to a regular \doxygen{ImageRegionIterator}, helping to abstract any complexity about the frequency layout into the iterator. By layout meaning the index of the pixels storing the value of the DC component (0 frequency), low/high frequency regions, or highest/Nyquist frequency. Also this layout can change depending on the parity of the image, or the library chosen to perform the Fourier Transform. For example, the python package performing a FFT generate a different frequency layout than the same transform from VNL or FFTW libraries. Even when the results are equivalent. At the time of writing, a frequency iterator for the layout of the FFTW library has been added. (TODO: VNL might share the same layout than FFTW but further testing or confirmation is required).\newline
+This iterator just add a method \doxygen{GetFrequencyIndex()} to a regular \doxygen{ImageRegionIterator}, helping to abstract any complexity about the frequency layout into the iterator. By layout meaning the index of the pixels storing the value of the DC component (0 frequency), low/high frequency regions, or highest/Nyquist frequency. Also, this layout can change depending on the parity of the image, or the library chosen to perform the Fourier Transform. At the time of writing, a frequency iterator for the ``standard'' layout used by VNL, FFTW in c++ and numpy.fft in python. .\newline
 This abstraction will hopefully facilitate the implementation of further filters manipulating images in the frequency domain.
 
 The next section deals with the Wavelet Pyramid that generates wavelet coefficients for each level (equal to the number of M-bands per level, more later).  The pyramid is redundant, and perfect reconstruction of the original input can be achieved using the inverse Wavelet transform.
@@ -401,7 +467,7 @@ All the isotropic wavelets developed form a frame with tight support (?), but th
 
 \section{This is an Appendix}
 
-To create an appendix in a Insight HOWTO document, use markup like
+To create an appendix in an Insight HOWTO document, use markup like
 this:
 
 \begin{verbatim}
@@ -409,7 +475,7 @@ this:
 
 \section{This is an Appendix}
 
-To create an appendix in a Insight HOWTO document, ....
+To create an appendix in an Insight HOWTO document, ....
 
 
 \section{This is another}
@@ -418,41 +484,14 @@ Just add another \section{}, but don't say \appendix again.
 \end{verbatim}
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  Example on how to insert a figure
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  Example on how to insert an equation.
-%  Never forget to put an equation in your paper.
-%  They make them look professional and impress the reviewers.
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-To support shape-guidance, the generic level set equation
-(Eqn(~\ref{eqn:ShapeInfluenceTerm})) is extended to incorporate a shape guidance
-term:
-
-\begin{equation}
-\label{eqn:ShapeInfluenceTerm}
-\xi \left(\psi^{*}(\mathbf{x}) - \psi(\mathbf{x})\right)
-\end{equation}
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 %  Insert the bibliography using BibTeX
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \nocite{*} % Print all bib.
-\bibliographystyle{unsrt}
 \twocolumn
 \bibliography{Wavelet}
 \onecolumn
-
 
 \end{document}
