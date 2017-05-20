@@ -9,18 +9,46 @@
 \documentclass{InsightArticle}
 \usepackage[dvips]{graphicx}
 
-\usepackage{color}
+\usepackage{xcolor}
 \definecolor{mygreen}{rgb}{0,0.6,0}
 \definecolor{mygray}{rgb}{0.5,0.5,0.5}
 \definecolor{mymauve}{rgb}{0.58,0,0.82}
-\usepackage{listings}
-\lstset{language=C++,
-        basicstyle=\ttfamily\footnotesize,
-        keywordstyle=\color{blue},
-        stringstyle=\color{mymauve},
-        commentstyle=\color{mygreen},
-        morecomment=[l][\color{magenta}]{\#}
+\definecolor{light-gray}{gray}{0.95} %the shade of grey that stack exchange uses
+% \usepackage{minted} % Requires pygmentize and python-pygmentize.
+\usepackage{fontspec}
+\setmonofont{inconsolata}
+% workaround for minted to work when output directory is not current.
+% NOTE: Change output to your outputdir, or remove it.
+\usepackage[outputdir=output]{minted} % Requires pygmentize and python-pygmentize.
+\setminted[c++]{%
+  % frame=single,
+  fontsize=\small,
+  style=borland,
+  breaklines,
+  % linenos,
+  bgcolor=light-gray
 }
+\newcommand{\inline}[1]{\mintinline{c++}/#1/}
+%% If no access to minted use listings
+% \usepackage{listings}
+% \lstset{language=C++,
+%         basicstyle=\ttfamily\footnotesize,
+%         keywordstyle=\color{blue},
+%         stringstyle=\color{mymauve},
+%         commentstyle=\color{mygreen},
+%         morecomment=[l][\color{magenta}]{\#},
+% %
+%         breaklines=true,
+%         backgroundcolor = \color{light-gray},
+%         frame=tblr, framerule=0pt,
+%         framextopmargin=3pt,
+% }
+%% columns fixed to avoid extra spaces
+% \usepackage{realboxes}
+% \newcommand{\inline}[1]{\Colorbox{light-gray}{\lstinline[columns=fixed]{#1}}}
+
+% Define command to make reference to github repo
+\newcommand{\github}[1]{\href{https://github.com/phcerdan/ITKIsotropicWavelets/blob/master/include/itk#1.h}{itk::#1}}
 \usepackage{amssymb}
 \usepackage{amsmath}
 \usepackage{amsthm}
@@ -37,7 +65,9 @@
 % \let\det\undefined
 % \newcommand{\det}[1]{\text{det}|\bm{#1}|} %already  defined in physics
 \def\w{\omega} % shortcut for omega
-\usepackage{commath} % defines abs, norm, vec, etc
+\def\vn{\bm{n}} % shortcut for n vector
+\def\vx{\bm{x}} % shortcut for x vector
+% \usepackage{commath} % defines abs, norm, vec, etc
 \usepackage{mathtools} % complex arrows
 \usepackage{bm} %easy usage of bold in math mode
 \usepackage{float}
@@ -50,7 +80,7 @@
 \tikzexternalize[prefix=tikz/]
 % \graphicspath{ {tikz/} }
 % \usepackage[backend=bibtex]{biblatex}
-% \usepackage{csquotes}% Recommended for biblatex
+\usepackage{csquotes}% Recommended for biblatex
 \bibliographystyle{unsrt}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -61,14 +91,15 @@
 bookmarks,
 bookmarksopen,
 backref,
-colorlinks,linkcolor={blue},citecolor={blue},urlcolor={blue}
+colorlinks,linkcolor={blue},citecolor={blue},urlcolor={blue},
 ]{hyperref}
+% \usepackage[hyphenbreaks]{breakurl}
 %  This is a template for Papers to the Insight Journal.
 %  It is comparable to a technical report format.
 
 % The title should be descriptive enough for people to be able to find
 % the relevant document.
-\title{Isotropic and Steerable Wavelets in N-Dimensions. A multiresolution analysis framework.}
+\title{Isotropic and Steerable Wavelets in N Dimensions. A multiresolution analysis framework.}
 
 %
 % NOTE: This is the last number of the "handle" URL that
@@ -119,14 +150,14 @@ colorlinks,linkcolor={blue},citecolor={blue},urlcolor={blue}
 
 \begin{abstract}
 \noindent
-This document describes the implementation of a multiresolution analsyis framework using isotropic and steerable wavelets in the frequency domain.
+This document describes the implementation of a multi-resolution analysis framework using isotropic and steerable wavelets in the frequency domain.
 
 It also aims to introduce these radial wavelets, hopefully providing a bridge between introductory books and research papers on the subject.
 
 The implementation is based on the original research made through the years by: Freeman, Adelman, Simoncelli, Kovasi, and specially on recent studies by Held, Chenouard, Van de Ville and Unser.
 
-The backbone of the multiscale analysis is provided by the Isotropic Wavelets, and the detection of directional features is provided by coupling it with a generalized Riesz transform.
-The generalized Riesz transform of order N behaves like a smoothed version of the Nth order derivatives of the signal. Also, it is steerable: its components impulse responses can be rotated to any spatial orientation.
+The backbone of the multi-scale analysis is provided by the Isotropic Wavelets, and the detection of directional features is provided by coupling it with a generalized Riesz transform.
+The generalized Riesz transform of order N behaves like a smoothed version of the Nth order derivatives of the signal. Also, it is steerable: its components impulse responses can be rotated to any spatial orientation, reducing computation time when detecting directional features.
 
 This paper is accompanied with the source code, input data, parameters and
 output data that the author used for validating the algorithm described in
@@ -142,14 +173,14 @@ publications must facilitate reproducibility of the reported results.
 \section{Introduction to Wavelet decomposition}
 \label{sec:Intro}
 Learning about wavelets from research papers is not easy. The topic is rich and deep, the same tool has spanned different research fields, from theoretical physics, to seismology and signal processing.
-Yves Meyer has won the Gauss Price (2010), and Abel Price (2017) in Mathematics for ``his pivotal role in the development of wavelets and multiresolution analysis''. The detection of Gravitational waves with the LIGO experiment involved the use of wavelets to analyse the signals.
+Yves Meyer has won the Gauss Price (2010), and Abel Price (2017) in Mathematics for ``his pivotal role in the development of wavelets and multi-resolution analysis''. The detection of Gravitational waves with the LIGO experiment involved the use of wavelets to analyse the signals.
 
 In terms of introductory books, I have found \cite{addison_illustrated_2002} to be clear and concise, with examples of applications in medical imaging, and other fields.
 
 \subsection{Motivation: spatial and frequency resolution}
 \label{sub:Motivation}
 Wavelets share the same motivation than the short-time FFT, or the windowed Fourier transform: get a representation of the signal/image/function that is well localized in space \textbf{and} frequency domains. Heisenberg Uncertainty principle applies here and it is called the Heisenberg-Gabor limit: $\Delta t \cdot \Delta f \geq \frac{1}{4\pi}$, limiting the simultaneous resolution of a signal in time-frequency.
-The Fourier transform, which is the representation of the signal in the basis of harmonic functions $\{\sin(f),\cos(f)\}\ \forall f \in \mathbb{R}$, is completely localized in frequency $\Delta f = 0$, but has global support in space, i.e infinitely delocalized in space $\Delta t = \infinity$.
+The Fourier transform, which is the representation of the signal in the basis of harmonic functions $\{\sin(f),\cos(f)\}\ \forall f \in \mathbb{R}$, is completely localized in frequency $\Delta f = 0$, but has global support in space, i.e infinitely de-localized in space $\Delta t = \infinity$.
 
 A few examples to illustrate the concept: In a discrete case, such as an image, this means that the FFT has the highest resolution on frequency, but where, in the spatial domain, a specific frequency occurs is reduced to `somewhere', bounded by the size of the image (\autoref{fig:spatial_resolution_fft}, \ref{fig:grid_a_fft}).
 Or in signals occurring only in one time-lapse: they can't be differentiated from the same signal occurring continuously, so they will share similar spectra representation (\autoref{fig:spatial_resolution_fft}). In the same line, non-stationary signals which frequency depends on time will give a spectrum where all those frequencies are represented, but there is no information about when, in time, the change of frequency occurred.
@@ -194,7 +225,7 @@ The short-time FFT add spatial/time localization dividing the original signal in
   \item Motivation: MRA
   \item Dilation Equation. Operator D.  Operator T. Translation.
   \item Wavelet Coefficients, basis, orthonormal, frames, oversample
-  \item Multiscale methods, pyramid, Meyer. Analysis and reconstruction.
+  \item Multi-scale methods, pyramid, Meyer. Analysis and reconstruction.
 \end{enumerate}
 
 % \subsection{Motivation: Multiresolution analysis (MRA) framework}
@@ -202,7 +233,7 @@ The short-time FFT add spatial/time localization dividing the original signal in
 
 \section{Wavelet transformation}
 
-Let consider the following wavelet decomposition $\forall f \in \mathcal{L}^2(\mathbb{R}^d)$
+Let consider the following wavelet decomposition $\forall f \in L_2(\mathbb{R}^d)$
 \begin{equation}
     f(\bm{x}) = \sum_{s \in \mathbb{Z}} \sum_{\bm{l} \in \mathbb{Z}^d} \langle f,\psi_{s,\bm{l}} \rangle \conj\psi_{s,\bm{l}}(\bm{x})
 \end{equation}
@@ -216,7 +247,7 @@ Each dilation, defined by the dilation matrix $A$, squeezes or stretches the mot
     \psi_{s,\bm{l}}(\bm{x}) = a^{-d\cdot s/2}\psi(a^s\bm{x} - \bm{l})
 \end{equation}
 
-The mother wavelet function has to have finite energy $\int_{-\infinity}^{\infinity}\abs{\psi(\bm{x})}^2 d\bm{x} < \infinity $.\newline
+The mother wavelet function has to have finite energy $\psi \in L_2(\mathbb{R}^d)$, i.e $\int_{-\infinity}^{\infinity}\abs{\psi(\bm{x})}^2 d\bm{x} < \infinity $.\newline
 
 \begin{definition}[Dilations and Translations]
   Given a function $f\in\mathbb{R}$ we define the dilation and translation operators\cite{heil_continuous_1989}:\par
@@ -237,12 +268,12 @@ The mother wavelet function has to have finite energy $\int_{-\infinity}^{\infin
     A family of functions $\{\phi_{\bm{k}}\}_{ \bm{k}\in\mathbb{Z}^d}$ is a \textit{frame} of $L_2(\mathbb{R}^d)$ if and only if there exists two positive constants A, B $< \infinity$ such that:
 
 \begin{equation}
-  \forall f \in L_2(\mathbb{R}^d), A\norm{f}^2 \le \sum_{\bm{k}\in\mathbb{Z}^d}\abs{\langle\phi_{\bm{k}},f\rangle}^2 \le B\norm{f}^2
+  A\norm{f}^2 \le \sum_{\bm{k}\in\mathbb{Z}^d}\abs{\langle\phi_{\bm{k}},f\rangle}^2 \le B\norm{f}^2, \forall f \in L_2(\mathbb{R}^d)
 \end{equation}
 
 The frame is \textit{tight} if $A=B$. If $A=B=1$ we have a \textit{Parseval frame} that satisfies the decomposition/reconstruction formula:
 \begin{equation}
-  \forall f \in L_2(\mathbb{R}^d), f = \sum_{\bm{k}\in\mathbb{Z}^d}\langle\phi_{\bm{k}},f\rangle \cdot \phi_{\bm{k}}
+  f = \sum_{\bm{k}\in\mathbb{Z}^d}\langle\phi_{\bm{k}},f\rangle \cdot \phi_{\bm{k}}, \forall f \in L_2(\mathbb{R}^d)
 \end{equation}
 which has the same form than the expansion using an orthonormal basis, however in the frame generalization, the family $\phi_{\bm{k}}$ may be redundant.
 \end{definition}
@@ -259,10 +290,17 @@ Let $h(w)$ be a radial frequency profile such that:
 \end{description}
 If the mother wavelet $\psi$ is defined by $\fft{\psi}(\bm{\w})= h(\norm{\bm{\w}})$, then it generates a tight wavelet frame in $L_2(\mathbb{R}^d)$, where $\fft{\psi}$ is the ND Fourier transform of $\psi$.
 
+Condition 2 guarantees that: TODO Insert frequency domain tiling:
+\begin{figure}[htpb]
+  \centering
+  \includegraphics[draft,width=0.9\linewidth]{figures/spatial_resolution_fft.pgf}
+  \caption{Frequency domain tiling}
+  \label{fig:frequency_tiling}
+\end{figure}
 \end{proposition}
 
 
-\subsection{Multiresolution: Image Pyramids}
+\subsection{Multi-resolution: Image Pyramids}
 
 \section{Isotropic wavelets}
 \label{sub:Isotropic}
@@ -343,28 +381,30 @@ These wavelets are non-separable in Cartesian coordinates, depending on $\norm{\
 % }
 % \end{lstlisting}
 
-\section{Multiscale Phase Analyis with the Riesz transform: A generalization of the Hilbert transform}
-\label{sec:Riesz}
+% \section{Multiscale Phase Analyis with the Riesz transform: A generalization of the Hilbert transform}
+\section{Riesz Transform}
+\label{sec:riesz_transform}
 The forward or analysis wavelet pyramid outputs a set of wavelet coefficients with information about each scale.
 A steerable filter \cite{held_steerable_2010, unser_steerable_2011, simoncelli_steerable_1995} can be applied to the output of the wavelet pyramid. This is the main purpose of the isotropy of the mother wavelet, the steerable filter is used to select the orientation where the feature of interest is maximum.
 
 There are mathematical constraints in the steerable filters that can be coupled with the wavelet pyramid. Read more: \cite{unser_multiresolution_2009, unser_steerable_2011}.
 
-One of the transform that can be coupled to the pyramid is the Riesz transform $\bm{\mathcal{R}}$
+One of the transform that can be coupled to the pyramid is a Riesz transform $\bm{\mathcal{R}}$ of order $N=1$
 \begin{equation}
 \bm{\mathcal{R}} f(\bm{x}) =
   \begin{pmatrix}
     \mathcal{R}_{1} f(\bm{x}) \\
     \vdots \\
-    \mathcal{R}_D f(\bm{x})
+    \mathcal{R}_d f(\bm{x})
   \end{pmatrix}
   \hspace{0.6cm}
   \xleftrightarrow[\mathcal{F}^{-1}]{\hspace{0.4cm}\mathcal{F}\hspace{0.4cm}}
   \hspace{0.6cm}
   \bm{\hat{\mathcal{R}}}\hat{f}(\bm{\omega}) = -j \frac{\bm{\omega}}{\norm{\bm{\omega}}}\hat{f}(\bm{\omega})
 \end{equation}
-where D is the image dimension, $j=\sqrt{-1}$ and $\mathcal{F}, \mathcal{F}^{-1}$ are the forward and inverse Fourier Transform.
-The Riesz transform is the generalization of the Hilbert transform, which is the case for $D=1$. The Hilbert transform $\mathcal{H}$ is used to generate the \textit{analytic signal} in 1D, which is the base to perform phase analysis of the original signal.
+where d is the image dimension and the number of components of the Riesz transform of order $N=1$. $j=\sqrt{-1}$ and $\mathcal{F}, \mathcal{F}^{-1}$ are the forward and inverse Fourier Transform.\newline
+
+The Riesz transform is the generalization of the Hilbert transform for ND. The Hilbert transform $\mathcal{H}$ is used to generate the \textit{analytic signal} in 1D.
 \begin{equation}
 \label{eq:analytic-signal}
 \begin{aligned}
@@ -377,30 +417,57 @@ The Riesz transform is the generalization of the Hilbert transform, which is the
 \end{aligned}
 \end{equation}
 
-The same approach is used in ND using the Riesz transform in every dimension.
-The analogous to the analytical signal is now a D+1 set called the \textbf{Monogenic signal}\cite{felsberg_monogenic_2001, kovesi_peters_????}.
+\subsection{Monogenic Signal}
+\label{sub:monogenic}
+
+There is no direct generalization of the analytical signal in ND, but we can generate a signal with similar properties, called the \textbf{Monogenic signal} using the Riesz transform of order 1\cite{felsberg_monogenic_2001, kovesi_peters_nodate}.
+The Monogenic signal is a set formed by the original signal and the D-components of the first order Riesz transform.
 \begin{equation}
-  f_m = \{f, \mathcal{R}_1, ..., \mathcal{R}_D\}
+  f_a = \{f, \mathcal{R}_x, ..., \mathcal{R}_d\}
 \end{equation}
+
+The amplitude $A$ and the phase $P$ at each location of the Monogenic signal are:
+\begin{equation}
+\label{eq:monogenic_amplitude}
+ A(\mathbf{x_0})= \sqrt{f(\mathbf{x_0})^2 + A_R(\mathbf{x_0})^2 }
+\end{equation}
+where $ A_R(\mathbf{x_0})=  \sqrt{\sum_{i=1}^N \mathcal{R}_i(\mathbf{x_0})^2} $
+\begin{equation}
+\label{eq:monogenic_phase}
+P(\mathbf{x_0})= \text{atan2}(A_R(\mathbf{x_0}),A(\mathbf{x_0}))
+\end{equation}
+
+The Monogenic signal can be used to perform local phase analysis for feature detection in ND.
 
 \subsection{Generalized Riesz Transform}
-The Riesz transform will map any frame of $L_2(\mathbb{R}^d)$ into another one \cite{held_steerable_2010, unser_wavelet_2010}.\\
-\begin{definition}[Frame]
-    A family of functions $\{\phi_{\bm{k}}\}_{ \bm{k}\in\mathbb{Z}^d}$ is a \textit{frame} of $L_2(\mathbb{R}^d)$ if and only if there exists two positive constants A, B $< \infinity$ such that:
+The Riesz transform will map any frame of $L_2(\mathbb{R}^d)$ into another one \cite{held_steerable_2010, unser_wavelet_2010}. This mapping property allows to couple the Riesz transform of any order with the wavelet pyramid and if the wavelet function is isotropic, to get perfect reconstruction when performing the inverse transform. The Riesz transform of order $N$ generate a vector containing smoothed directional Nth derivatives.
 
-\begin{equation}
-  \forall f \in L_2(\mathbb{R}^d), A\norm{f}^2 \le \sum_{\bm{k}\in\mathbb{Z}^d}\abs{\langle\phi_{\bm{k}},f\rangle}^2 \le B\norm{f}^2
-\end{equation}
+We will summarize the multiindex notation introduced in \cite{unser_steerable_2011}.\newline
+Consider $ \vn = (n_{1}, \ldots, n_{d})$ a d-dimensional multiindex vector, where the $n_i$ entries are non-negative integers. And then define the following operators and operations:
+\begin{enumerate}[topsep=0pt]
+  \item Sum of components: $\abs{\bm{n}} = \sum_{i=1}^d n_i = N$.
+  \item Factorial: $\vn! = n_1!n_2!\cdots n_d!$
+  \item Exponentiation of a vector $z = (z_i,\cdots,z_d) \in \mathbb{C}^d$:
+    $z^{\vn} = z_{1}^{n_1} \cdots z_{d}^{n_d}$
+  \item Partial derivative of a function $f(\vx), \vx = (x_1,\ldots, x_d) \in \mathbb{R}^d$:
+    $\partial^{\vn}f(\vx) = \frac{\partial^{N}f(\vx)}{\partial x_{1}^{n_1}\cdots \partial x_{d}^{n_d}}$
+\end{enumerate}
 
-The frame is \textit{tight} if $A=B$. If $A=B=1$ we have a \textit{Parseval frame} that satisfies the decomposition/reconstruction formula:
+Riesz transforms can be connected to the partial derivatives \cite{unser_steerable_2011}:
+\begin{equation*}
+\label{eq:riesz_partial_derivatives}
+\mathcal{R}^{\vn}(-\Delta)^{\frac{\abs{\vn}}{2}}f(\vx) = (-1)^{\abs{\vn}}\sqrt{\frac{\abs{\vn}!}{\vn!}}\partial^{\vn}f(\vx)
+\end{equation*}
+where $(-\Delta)^\gamma$ is the fractional Laplace of order $\gamma$. From \cite{unser_steerable_2011}: \blockquote{Since the inverse of $(-\Delta)^{\frac{\abs{\vn}}{2}}$ is an isotropic low-pass-filtering operator, the net effect of the higher order Riesz transform is to extract smoothed version of the derivatives of order N of the signal of interested.}
+
+The number of components of $\bm{\mathcal{R}}$ depends on the order of the Riesz transform $N$, and the dimension of the signal $d$:
 \begin{equation}
-  \forall f \in L_2(\mathbb{R}^d), f = \sum_{\bm{k}\in\mathbb{Z}^d}\langle\phi_{\bm{k}},f\rangle \cdot \phi_{\bm{k}}
+\label{eq:riesz_components}
+ M = p(N,d) = \frac{(N+d-1)!}{(d-1)! N!}
 \end{equation}
-which has the same form than the expansion using an orthonormal basis, however in the frame generalization, the family $\phi_{\bm{k}}$ may be redundant.
-\end{definition}
 
 \subsection{Generalized Steerable Framework}
-Simoncelli \cite{simoncelli_steerable_1995} coupled the multiresolution analysis using wavelets with the steerable concept developed years before \cite{freeman_design_1991}. A steerable framework can be used with polar separable functions. In this case, the radial part of the function has to be calculated only once, and the polar part has only to be computed in those directions that constitute a basis of the space. After this, the filter can be oriented, or steered to any direction, using a weighted linear combination of the basis. This approach gives a directional analysis but keeping it computationally performant.
+Simoncelli \cite{simoncelli_steerable_1995} coupled the multi-resolution analysis using wavelets with the steerable concept developed years before \cite{freeman_design_1991}. A steerable framework can be used with polar separable functions. In this case, the radial part of the function has to be calculated only once, and the polar part has only to be computed in those directions that constitute a basis of the space. After this, the filter can be oriented, or steered to any direction, using a weighted linear combination of the basis. This approach gives a directional analysis but keeping it computationally performant.
 
 The steerable framework can be combined with wavelets when these are isotropic, which implies polar separability.
 Simoncelli's framework has been used in a lot of 2D applications. Freeman in its seminal work \cite{freeman_design_1991} wrote a generalized version for any dimension, but it was lately, Chenouard and Unser \cite{held_steerable_2010,unser_steerable_2011,chenouard_3d_2012} who used rotation matrices in 3D.
@@ -419,44 +486,206 @@ $\{g_m\}_{m=1...M}$ is the set of primary functions, ie , a basis, and $\{k_m\}_
 \subsection{Summary}
 \label{sub:Summary}
 
-Input to filters in this module needs to be in the dual space (frequency). Usually from the output of a forward FFT \doxygen{ForwardFFTImageFilter} The decision is based on performance and accuracy, avoiding expensive convolution operations.
+Most of the filters in this module require input images in the dual space (frequency domain). If working with regular spatial-domain images, a \doxygen{ForwardFFTImageFilter} has to be applied. The decision is based on performance and accuracy, avoiding expensive convolution operations and also multiple Fourier transforms.
 
-Also, because we work in the frequency space, we add a \doxygen{FrequencyShrinker} and a \doxygen{FrequencyExpander} \textbf{without} any interpolation. The shrinker chops the high frequency pixels of the image. And the expander adds zeros in the higher frequency bins. These filters don't assume that the complex input is hermitian, so they can be used with any complex input not necessarily derived from a real space image.
+Also, because we work in the frequency domain, we add a \github{FrequencyShrinkImageFilter} and a \github{FrequencyExpandImageFilter} \textbf{without} any interpolation. The shrinker chops the high frequency pixels of the image. And the expander adds zeros in the higher frequency bins.
+These filters require input images to be hermitian --note that the output of a forward FFT on a real image is hermitian.\newline
+General FrequencyExpanders and FrequencyShrinkers that can be applied to non-hermitian complex images are not implemented, although some preliminary work can be found in \url{https://github.com/phcerdan/ITKIsotropicWavelets/pull/31} based on \cite{portilla_image_2003}.
 
-Every filter that uses the frequency value of a pixel can be templated with a \doxygen{FrequencyImageRegionIterator}.\newline
-This iterator just add a method \doxygen{GetFrequencyIndex()} to a regular \doxygen{ImageRegionIterator}, helping to abstract any complexity about the frequency layout into the iterator. By layout meaning the index of the pixels storing the value of the DC component (0 frequency), low/high frequency regions, or highest/Nyquist frequency. Also, this layout can change depending on the parity of the image, or the library chosen to perform the Fourier Transform. At the time of writing, a frequency iterator for the ``standard'' layout used by VNL, FFTW in c++ and numpy.fft in python. .\newline
+\subsection{Frequency Iterators}
+\label{sub:frequencyiterators}
+Every filter that uses the frequency value of a pixel can be templated with a \github{FrequencyImageRegionIterator}.\newline
+This kind of iterators add the functions GetFrequencyBin(), GetFrequencyIndex() to a regular \doxygen{ImageRegionIterator}, helping to abstract the complexity of the frequency layout into the iterator.
+The layout determines the order and location of the frequency bins: zero frequency --DC component--, Nyquist, low/high, or positive and negative frequencies. The layout changes depending on the parity of the image, the forward Fourier transform algorithm chosen, or if the frequencies have been shifted (\doxygen{FFTShiftImageFilter}).\newline
+Also these frequency iterators have data members: FrequencyOrigin, FrequencySpacing, holding metadata information about the frequency domain.\newline
+ITK puts a strong emphasis in the ImageInformation or metadata on spatial domain images: Origin, Spacing, Direction, Index. There are strong requirements when dealing with images with different metadata, for example, multiplication between two images is only possible when they have compatible ImageInformation.\newline
+Although, when applying a \doxygen{ForwardFFTImageFilter}, the output image, which is now in the frequency domain, still have metadata referring to the spatial domain, but nothing about the frequency origin, or spacing between frequencies.
+
+There are three classes of FrequencyImageRegionIterator:
+\begin{description}[topsep=0pt,font=\normalfont\textbullet\space]
+  \item [FFTLayout:] \github{FrequencyFFTLayoutImageRegionIterator}\newline
+    This iterator assumes that the frequency image has a ``standard layout''. Different libraries, such as VNL, FFTW, numpy.fft, generate this layout. Each image dimension is divided in two regions, holding positive and negative frequencies.
+    \begin{description}[topsep=0pt,font=\normalfont-\space]
+      \item[ZeroFrequency:] The index holding the zero frequency value is at the origin $[0,\ldots,0]$ (upper-left, corner).
+      \item[Nyquist:] When size $N$ is even, the positive Nyquist frequency is located in the middle, index $N/2$, and the negative Nyquist is not stored.
+    When $N$ is odd, there is no Nyquist frequency, but most positive frequency is at index $(N-1)/2$, and most negative frequency is at index $(N+1)/2$
+    \end{description}
+    The first index after the origin corresponds to the positive lowest frequency, say $0.1 \text{Hz}$. If this is the index $1$, the latest index $N-1$ corresponds to the less negative frequency $-0.1 \text{Hz}$
+
+  \item [ShiftedFFTLayout:] \github{FrequencyShiftedFFTLayoutImageRegionIterator}\newline
+    The standard layout can be confusing to reason about, a common alternative is to shift the zero frequency bin to the center of the image via \doxygen{FFTShiftImageFilter}.
+  \item [Regular:] \github{FrequencyImageRegionIterator}.\newline
+    This iterator is for images that were taken experimentally in the frequency domain. GetFrequency() here is just a wrap of TransformIndexToPhysicalPoint, and GetFrequencyBin is equal to GetIndex. It assumes that the image metadata refers to the frequency domain, so FrequencyOrigin and FrequencySpacing are equal to the regular Origin and Spacing.
+    Iterators with GetFrequency() functions are needed for other classes in the module.
+\end{description}
+
 This abstraction will hopefully facilitate the implementation of further filters manipulating images in the frequency domain.
 
-The next section deals with the Wavelet Pyramid that generates wavelet coefficients for each level (equal to the number of M-bands per level, more later).  The pyramid is redundant, and perfect reconstruction of the original input can be achieved using the inverse Wavelet transform.
+\subsection{Wavelet Transform}
+\label{sub:wavelet_transform}
 
-The Wavelet Transform is templated over an IsotropicWavelet chosen by the user through a \doxygen{WaveletFilterBankGenerator}
+The next section deals with the Wavelet Pyramid that generates wavelet coefficients for each level (equal to the number of M-bands per level, more later).  The pyramid is redundant, and perfect reconstruction of the original input can be achieved using the inverse Wavelet transform when the wavelet function is isotropic
+
+The Wavelet Transform is templated over an IsotropicWavelet chosen by the user through a \github{WaveletFrequencyFilterBankGenerator}
 
 The wavelet coefficients from the forward pyramid can be manipulated to perform further image analysis, for example edge detection, denoise, phase analysis for feature detection, etc.
+
+\subsection{Riesz Transform}
+\label{sub:riesz_transform}
+
+
+\subsection{Structure Tensor}
+\label{sub:structure_tensor}
+
+Given an array of inputs, StructureTensor computes the linear combination (or direction) of inputs that maximizes the response for each location in the image. Instead of only measuring the response at the pixel of interest, it takes into account a local neighborhood. \cite{unser_steerable_2011}.
+
+$$
+ \mathbf{u}({\mathbf{x}_0}) = \arg \max_{\Vert\mathbf{u}\Vert =1 }  \int_{\mathbb{R}^d} g(\mathbf{x} - \mathbf{x}_0) \left| \mathbf{I}_{\mathbf{u}}(\mathbf{x})\right|^2
+$$
+$$
+ \left| \mathbf{I}_{\mathbf{u}}(\mathbf{x})\right|^2 =
+ \mathbf{u}^T \cdot \mathbf{I}(\mathbf{x}) \cdot (\mathbf{I}(\mathbf{x}))^T \cdot \mathbf{u}
+$$
+ $ \mathbf{I}$ is the required std::vector of input images. These images might be the output of a directional filter to an image
+ (for example, directional derivatives from an image) or the basis of a steerable filter, such as a RieszImageFilter.
+ Instead of just selecting the max response from the vector at every pixel, it uses the response over
+ a local neighborhood, specified using an isotropic Gaussian window $g(\mathbf{x})$.
+ This approach is more robust against noise. The user can control the radius and sigma of this Gaussian kernel.
+ Estimation of the local orientation this way results in an eigen-system with matrix:
+ $$
+ [\mathbf{J}(\mathbf{x}_0)]_{mn} = \sum_{\mathbf{x} \in \mathbb{Z}^d} g(\mathbf{x} - \mathbf{x}_0) I_m[\mathbf{x}]I_n[\mathbf{x}]
+ $$
+ where $I_m, I_n $ are input images, $ m,n \in {0,N-1} $ and $N$ is the total number of inputs.
+ $g$ is a Gaussian kernel.
+
+ The solution of the EigenSystem defined by $\mathbf{J}$ are the N EigenValues and EigenVectors.
+ The output of StructureTensor is a 2D Matrix of size (N,N+1), where the submatrix (N,N) are the EigenVectors, and the last column (N+1) are the EigenValues.
+ The orientation that maximizes the response: $\bm{u}$ is the EigenVector with largest EigenValue, which is is the Nth column of the output matrix.
+ We can use the calculated direction $\bm{u}$ to get a new image with max response from the inputs at each pixel with the function ComputeProjectionImageWithLargestResponse(),
+ or any other direction from other eigen vectors with ComputeProjectionImage
+
+ Also we can compare eigen values to study the local coherency of each pixel:
+ $$
+ \chi (\mathbf{x}_0)= \frac{\lambda_N(\mathbf{x}_0) - A(\mathbf{x}_0)}{\lambda_N(\mathbf{x}_0) + A(\mathbf{x}_0)}
+ $$
+where $\lambda_N(\mathbf{x}_0)$ is the largest eigen value at pixel $\mathbf{x}_0$ ,
+and
+$A(\mathbf{x}_0) = \frac{1}{N-1}\sum_{i=1}^{N-1}\lambda_i(\mathbf{x}_0)$ is the average of the other eigen values.
+
+\subsection{Other}
+\label{sub:other}
 
 This module also implements a couple of PhaseAnalyzers that can be used on every wavelet coefficient to perform multi-scale feature detection. It is based on the Riesz Transform and the Monogenic Signal \cite{felsberg_monogenic_2001,unser_multiresolution_2009}.
 One of the phase analyzer use the steerability of the Riesz transform to select the orientation of max response \cite{held_steerable_2010,unser_steerable_2011}.
 
 \section{A guided example:}
 I recommend the reader interested in extend this module to have a look to the tests for more usage options.
-\subsection{Input in the frequency space.}
-The input for the \doxygen{WaveletFrequencyForward} has to be a complex image of float pixel type. If the input is a real image, this representation is generated from a forward FFT , \doxygen{ForwardFFTImageFilter}.
-Perform an FFT. Select of the layout.
-Problems with FFTPad, negative index does not work well with neighbour iterators. Solvable.
+\subsection{Input in the frequency domain.}
+The input for the \github{WaveletFrequencyForward} has to be a complex image of a float/double pixel type. If the image is not in the frequency domain already, apply a \doxygen{ForwardFFTImageFilter} to get it.
+
+Some FFT algorithms only work for specific image sizes, for example, the size has to be a power of two.
+You can apply a \doxygen{FFTPadImageFilter} to pad the image with zeros to reach the required size. However, this filter sets some padded areas with negative indices, which can generate problems with neighbour iterators.
+As a work around, this module introduces \github{FFTPadPositiveIndexImageFilter} to avoid negative indices.
+
 \subsection{Choosing an isotropic wavelet}
 \label{sub:Choosing}
-Through a WaveletFilterBankGenerator. See available options \ref{sub:Isotropic}
-Note that the frequency input must be in Hz, not in rad/sec. A method: TODOTODODO
-All the isotropic wavelets developed form a frame with tight support (?), but their wavelet basis might not be orthogonal, and the span of the basis is usually oversampled. (TODOTODO Check this.)
-\subsection{Wavelet Pyramid}
-\label{sub:Pyramid}
+Choose a mother wavelet from the options available \ref{sub:Isotropic}, and create a
+\github{WaveletFrequencyFilterBankGenerator} with the type of the mother wavelet as a template parameter.
+
+\begin{minted}{c++}
+  typedef itk::HeldIsotropicWavelet< PixelType, ImageDimension>
+    WaveletFunctionType;
+  typedef itk::WaveletFrequencyFilterBankGenerator< ComplexImageType, WaveletFunctionType >
+    WaveletFilterBankType;
+\end{minted}
 
 \subsection{Forward / Analysis}
 \label{sub:Forward}
+Perform the wavelet transform based on input levels and high-frequency sub bands.
+\inline{ComputeMaxNumberOfLevels} is a static class function to calculate the max level.
+Currently, the size of input image has to be a multiple of two, but the implementation has the member \inline {m_ScaleFactor} for future extension and relaxation of this constraint.
+
+\begin{minted}{c++}
+  typedef itk::WaveletFrequencyForward< ComplexImageType, ComplexImageType, WaveletFilterBankType >
+    ForwardWaveletType;
+  typename ForwardWaveletType::Pointer forwardWavelet = ForwardWaveletType::New();
+  forwardWavelet->SetHighPassSubBands( highSubBands );
+  forwardWavelet->SetLevels(levels);
+  forwardWavelet->SetInput(fftFilter->GetOutput());
+\end{minted}
 
 \subsection{PhaseAnalyzer}
 
 \subsection{Inverse / Reconstruction}
 \label{sub:Inverse}
+
+% \begin{lstlisting}
+\begin{minted}{c++}
+#include "itkHeldIsotropicWavelet.h"
+#include "itkVowIsotropicWavelet.h"
+#include "itkSimoncelliIsotropicWavelet.h"
+#include "itkShannonIsotropicWavelet.h"
+#include "itkWaveletFrequencyFilterBankGenerator.h"
+#include "itkWaveletFrequencyForward.h"
+...
+
+  const unsigned int ImageDimension = 3;
+  typedef double                                          PixelType;
+  typedef std::complex< PixelType >                       ComplexPixelType;
+  typedef itk::Image< ComplexPixelType, ImageDimension >  ComplexImageType;
+
+  // Set the WaveletFunctionType and the WaveletFilterBank
+  typedef itk::HeldIsotropicWavelet< PixelType, ImageDimension >
+        WaveletFunctionType;
+  typedef itk::WaveletFrequencyFilterBankGenerator< ComplexImageType, WaveletFunctionType >
+    WaveletFilterBankType;
+
+  // WaveletFrequencyForward
+  typedef itk::WaveletFrequencyForward< ComplexImageType, ComplexImageType, WaveletFilterBankType >
+    ForwardWaveletType;
+  typename ForwardWaveletType::Pointer forwardWavelet = ForwardWaveletType::New();
+  forwardWavelet->SetHighPassSubBands( highSubBands );
+  forwardWavelet->SetLevels(levels);
+  forwardWavelet->SetInput(fftFilter->GetOutput());
+  forwardWavelet->Update();
+
+  // Result of the wavelet decomposition.
+  typename ForwardWaveletType::OutputsType analysisWaveletCoeffs =
+    forwardWavelet->GetOutputs();
+  // Manipulate coefficients for your purposes:
+  // Denoise, phase analysis, etc...
+  typename ForwardWaveletType::OutputsType modifiedWaveletCoeffs;
+  for( unsigned int i = 0; i < forwardWavelet->GetNumberOfOutputs(); ++i )
+    {
+    ...
+    aWaveletCoefficientFilter->SetInput( analysisWaveletCoeffs[i] );
+    aWaveletCoefficientFilter->Update();
+    modifiedWaveletCoeffs.push_back( aWaveletCoefficientFilter->GetOutput() );
+    }
+
+  // Inverse Wavelet Transform
+  typedef itk::WaveletFrequencyInverse< ComplexImageType, ComplexImageType, WaveletFilterBankType >
+    InverseWaveletType;
+  typename InverseWaveletType::Pointer inverseWavelet = InverseWaveletType::New();
+  inverseWavelet->SetHighPassSubBands( highSubBands );
+  inverseWavelet->SetLevels( levels );
+  // inverseWavelet->SetInputs( forwardWavelet->GetOutputs() );
+  inverseWavelet->SetInputs( modifiedWaveletCoeffs );
+  bool useWaveletFilterBankPyramid = true;
+  inverseWavelet->SetUseWaveletFilterBankPyramid( useWaveletFilterBankPyramid );
+  inverseWavelet->SetWaveletFilterBankPyramid( forwardWavelet->GetWaveletFilterBankPyramid() );
+  inverseWavelet->Update();
+
+  // The output of the inverse wavelet is in the frequency domain.
+  // Perform an InverseFFT to get a real image.
+  typename InverseFFTFilterType::Pointer inverseFFT = InverseFFTFilterType::New();
+  inverseFFT->SetInput( inverseWavelet->GetOutput() );
+
+  // Write or visualize the reconstructed output.
+  writer->SetInput(inverseFFT->GetOutput());
+
+\end{minted}
+% \end{lstlisting}
 
 % The preceding sections will have been written in a gentler,
 % introductory style.  You may also wish to include a reference
@@ -489,7 +718,7 @@ Just add another \section{}, but don't say \appendix again.
 %  Insert the bibliography using BibTeX
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\nocite{*} % Print all bib.
+% \nocite{*} % Print all bib.
 \twocolumn
 \bibliography{Wavelet}
 \onecolumn
