@@ -1,9 +1,10 @@
+#!/usr/bin/env python
 import numpy as np
 import matplotlib.pyplot as plt
 import os,sys
 import itertools
 import matplotlib as mpl
-def run(file_bands):
+def run(file_in):
     colors_array = mpl.colors.cnames.keys()
     colors_array = ['black']
     colorStyles = itertools.cycle(colors_array)
@@ -14,38 +15,54 @@ def run(file_bands):
     markers_array = ['None',',', '+', '.', 'o', '*']
     markerStyles = itertools.cycle(markers_array)
 
-    data_bands = np.loadtxt(file_bands, delimiter=',')
-    bands = data_bands[0,:].size - 1;
-    w = data_bands[:,0]
-    fig_bands, ax_bands = plt.subplots(1,1)
+    data = np.loadtxt(file_in, delimiter=',')
+    bands = data[0,:].size - 1;
+    w = data[:,0]
+    fig, ax = plt.subplots(1,1)
     for row in range( 1, bands + 1 ):
         if row == 1:
-            ax_bands.plot(w,data_bands[:,row],label=str(row - 1) + " LP",
+            ax.plot(w,data[:,row],label=str(row - 1) + " LP",
                     linestyle = next(lineStyles),
                     # marker = next(markerStyles), markevery=0.5,
                     color = next(colorStyles));
         elif row == bands:
-            ax_bands.plot(w,data_bands[:,row], label=str(row - 1) + " HP",
+            ax.plot(w,data[:,row], label=str(row - 1) + " HP",
                     linestyle = next(lineStyles),
                     # marker = next(markerStyles), markevery=0.5,
                     color  = next(colorStyles));
         else:
-            ax_bands.plot(w,data_bands[:,row], label=str(row - 1),
+            ax.plot(w,data[:,row], label=str(row - 1),
                     linestyle = next(lineStyles),
                     # marker = next(markerStyles), markevery=0.5,
                     color  = next(colorStyles));
 
-            ax_bands.legend(loc="best", title="SubBand:")
-    ax_bands.set_ylabel(str(bands) + ' Subbands')
-    ax_bands.set_ylim(-0.1,1.1);
-    ax_bands.set_xlim(0,0.52); # w_max = N/2 / N = 0.5
-    ax_bands.set_xlabel('w [Hz]')
-    file_bands_base = os.path.splitext(str(file_bands))[0] #/path/to/filename, without .txt
-    file_bands_out = file_bands_base + ".png"
-    fig_bands.savefig(file_bands_out);
+    plt.tick_params(
+        axis='x',which='both',      # both major and minor ticks are affected
+        bottom='off',top='off')
+    ax.set_yticks(np.arange(0.0, 1.0 + 0.1, 1.0))
+    ax.set_xticks(np.arange(0.0, 0.5 + 0.1, 1.0/32.0))
+    labels = [item.get_text() for item in ax.get_xticklabels()]
+    labels[0] = '0';
+    labels[8] = '$\pi/2$';
+    labels[16] = '$\pi$';
+    ax.set_xticklabels(labels)
+    ax.legend(loc="best", title="SubBand $i$:")
+    ax.set_ylim(-0.1,1.1);
+    ax.set_ylabel('$\hat{h_i}(\omega)$', rotation='horizontal', va='top')
+    ax.set_xlim(0,0.52); # w_max = N/2 / N = 0.5
+    ax.set_xlabel('$\omega$ [rad/s]')
+    file_base = os.path.splitext(str(file_in))[0] #/path/to/filename, without .txt
+    file_out = file_base + ".png"
+    # fig.savefig(file_out);
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
     plt.show()
-    # fig_bands.show()
+    plt.clf()
+    plt.cla()
+    plt.close()
+    # plt.close(fig)
+    # fig.show()
 
 if __name__ == '__main__':
-    file_bands = sys.argv[1];
-    run(file_bands)
+    file_in = sys.argv[1];
+    run(file_in)
