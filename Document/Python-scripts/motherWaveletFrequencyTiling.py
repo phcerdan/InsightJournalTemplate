@@ -45,11 +45,11 @@ def run(file_in):
     ax.legend(loc="best", title="Level $i$:")
     ax.set_xlim(0,0.501); # w_max = N/2 / N = 0.5
     ax.set_xlabel('$\omega$ [rad/s]')
-    ax.set_ylabel('$\hat{\psi}(2^{i}\omega)$', rotation='horizontal', va='top')
+    ax.set_ylabel('$h(2^{i}\omega)$', rotation='horizontal', va='top')
     ax.set_ylim(-0.0,1.01);
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
-    fig.savefig(file_out);
+    fig.savefig(file_out, bbox_inches='tight');
     plt.show()
     plt.clf()
     plt.cla()

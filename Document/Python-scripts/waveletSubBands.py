@@ -36,24 +36,28 @@ def run(file_in):
                     # marker = next(markerStyles), markevery=0.5,
                     color  = next(colorStyles));
 
-    plt.tick_params(
-        axis='x',which='both',      # both major and minor ticks are affected
-        bottom='off',top='off')
-    ax.set_yticks(np.arange(0.0, 1.0 + 0.1, 1.0))
-    ax.set_xticks(np.arange(0.0, 0.5 + 0.1, 1.0/32.0))
-    labels = [item.get_text() for item in ax.get_xticklabels()]
-    labels[0] = '0';
-    labels[8] = '$\pi/2$';
-    labels[16] = '$\pi$';
-    ax.set_xticklabels(labels)
+    # plt.tick_params(
+    #     axis='x',which='both',      # both major and minor ticks are affected
+    #     bottom='off',top='off')
+    # ax.set_xticks(np.arange(0.0, 0.5 + 0.1, 1.0/32.0))
+    # labels = [item.get_text() for item in ax.get_xticklabels()]
+    # labels[0] = '0';
+    # labels[8] = '$\pi/2$';
+    # labels[16] = '$\pi$';
+    # ax.set_xticklabels(labels)
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
     ax.legend(loc="best", title="SubBand $i$:")
-    ax.set_ylim(-0.1,1.1);
+    ax.set_ylim(-0.0,1.01);
+    ax.set_yticks(np.arange(0.0, 1.0 + 0.1, 1.0))
     ax.set_ylabel('$\hat{h_i}(\omega)$', rotation='horizontal', va='top')
     ax.set_xlim(0,0.52); # w_max = N/2 / N = 0.5
+    ax.set_xticks([0.0, 0.25, 0.5])
+    ax.set_xticklabels(['0', '$\pi/2$', '$\pi$'])
     ax.set_xlabel('$\omega$ [rad/s]')
     file_base = os.path.splitext(str(file_in))[0] #/path/to/filename, without .txt
     file_out = file_base + ".png"
-    # fig.savefig(file_out);
+    fig.savefig(file_out, bbox_inches='tight');
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
     plt.show()
