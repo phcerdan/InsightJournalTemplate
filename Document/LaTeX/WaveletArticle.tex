@@ -7,7 +7,7 @@
 %     http://www.itk.org/
 
 \documentclass{InsightArticle}
-\usepackage[dvips]{graphicx}
+\usepackage{graphicx}
 
 \usepackage{xcolor}
 \definecolor{mygreen}{rgb}{0,0.6,0}
@@ -74,7 +74,7 @@
 \usepackage{caption} %setup of captions
 \usepackage{subcaption}
 \usepackage{pgf} % native latex from python
-\graphicspath{ {images/} }
+\graphicspath{ {images/}{figures/} }
 \usepackage{tikz}
 \usetikzlibrary{external}
 \tikzexternalize[prefix=tikz/]
@@ -125,20 +125,18 @@ colorlinks,linkcolor={blue},citecolor={blue},urlcolor={blue},
 %
 % Add hyperlink to the web location and license of the paper.
 % The argument of this command is the handler identifier give\IJhandlefooter{\IJhandlerIDnumber}
-
-
-\ifpdf
-\else
-   %
-   % Commands for including Graphics when using latex
-   %
-   \DeclareGraphicsExtensions{.eps,.jpg,.gif,.tiff,.bmp,.png}
-   \DeclareGraphicsRule{.jpg}{eps}{.jpg.bb}{`convert #1 eps:-}
-   \DeclareGraphicsRule{.gif}{eps}{.gif.bb}{`convert #1 eps:-}
-   \DeclareGraphicsRule{.tiff}{eps}{.tiff.bb}{`convert #1 eps:-}
-   \DeclareGraphicsRule{.bmp}{eps}{.bmp.bb}{`convert #1 eps:-}
-   \DeclareGraphicsRule{.png}{eps}{.png.bb}{`convert #1 eps:-}
-\fi
+% \ifpdf
+% \else
+%    %
+%    % Commands for including Graphics when using latex
+%    %
+%    \DeclareGraphicsExtensions{.eps,.jpg,.gif,.tiff,.bmp,.png}
+%    \DeclareGraphicsRule{.jpg}{eps}{.jpg.bb}{`convert #1 eps:-}
+%    \DeclareGraphicsRule{.gif}{eps}{.gif.bb}{`convert #1 eps:-}
+%    \DeclareGraphicsRule{.tiff}{eps}{.tiff.bb}{`convert #1 eps:-}
+%    \DeclareGraphicsRule{.bmp}{eps}{.bmp.bb}{`convert #1 eps:-}
+%    \DeclareGraphicsRule{.png}{eps}{.png.bb}{`convert #1 eps:-}
+% \fi
 
 
 \maketitle
@@ -280,6 +278,7 @@ which has the same form than the expansion using an orthonormal basis, however i
 
 The present requirement that the mother wavelet is isotropic constraints the wavelet-design:
 \begin{proposition}
+  \label{prop:tight_conditions}
   Conditions for the mother wavelet $\psi$ to generate a tight wavelet frame \cite{held_steerable_2010, unser_steerable_2011, chenouard_3d_2012}:\newline
 Let $h(w)$ be a radial frequency profile such that:
 \begin{description}[font=\normalfont , leftmargin=*, labelsep=*, labelindent=*]
@@ -290,15 +289,77 @@ Let $h(w)$ be a radial frequency profile such that:
 \end{description}
 If the mother wavelet $\psi$ is defined by $\fft{\psi}(\bm{\w})= h(\norm{\bm{\w}})$, then it generates a tight wavelet frame in $L_2(\mathbb{R}^d)$, where $\fft{\psi}$ is the ND Fourier transform of $\psi$.
 
-Condition 2 guarantees that: TODO Insert frequency domain tiling:
-\begin{figure}[htpb]
-  \centering
-  \includegraphics[draft,width=0.9\linewidth]{figures/spatial_resolution_fft.pgf}
-  \caption{Frequency domain tiling}
-  \label{fig:frequency_tiling}
-\end{figure}
+Condition 2 guarantees that the tiling from all the scales fills the frequency domain, see \autoref{fig:mother_wavelets}.
 \end{proposition}
 
+%%%%% Condition2 %%%%%%
+\begin{figure}[H]
+  \begin{subfigure}[t]{.49\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{profileMotherWavelet_Vow_5_Mother.png}
+    \captionsetup{width=\textwidth}
+    \caption{Vow.}
+    \label{fig:mother_vow}
+  \end{subfigure}
+  \begin{subfigure}[t]{.49\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{profileMotherWavelet_Held_5_Mother.png}
+    \captionsetup{width=\textwidth}
+    \caption{Held.}
+    \label{fig:mother_held}
+  \end{subfigure}
+  \vskip\baselineskip
+  \begin{subfigure}[t]{.49\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{profileMotherWavelet_Simoncelli_5_Mother.png}
+    \captionsetup{width=\textwidth}
+    \caption{Simoncelli.}
+    \label{fig:mother_simoncelli}
+  \end{subfigure}
+  \begin{subfigure}[t]{.49\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{profileMotherWavelet_Shannon_5_Mother.png}
+    \captionsetup{width=\textwidth}
+    \caption{Shannon.}
+    \label{fig:mother_shannon}
+  \end{subfigure}
+  \caption{Tiling of the frequency domain by isotropic wavelets when the dilation factor is $2$. All the wavelets fulfill the conditions from Proposition \ref{prop:tight_conditions}. The mother wavelets are represented at $i=0$. }
+  \label{fig:mother_wavelets}
+\end{figure}
+
+\begin{figure}[H]
+  \begin{subfigure}[t]{.49\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{profileMotherWavelet_Vow_5_SubBands.png}
+    \captionsetup{width=\textwidth}
+    \caption{Vow.}
+    \label{fig:subbands_vow}
+  \end{subfigure}
+  \begin{subfigure}[t]{.49\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{profileMotherWavelet_Held_5_SubBands.png}
+    \captionsetup{width=\textwidth}
+    \caption{Held.}
+    \label{fig:subbands_held}
+  \end{subfigure}
+  \vskip\baselineskip
+  \begin{subfigure}[t]{.49\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{profileMotherWavelet_Simoncelli_5_SubBands.png}
+    \captionsetup{width=\textwidth}
+    \caption{Simoncelli.}
+    \label{fig:subbands_simoncelli}
+  \end{subfigure}
+  \begin{subfigure}[t]{.49\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{profileMotherWavelet_Shannon_5_SubBands.png}
+    \captionsetup{width=\textwidth}
+    \caption{Shannon.}
+    \label{fig:subbands_shannon}
+  \end{subfigure}
+  \caption{Shape of SubBands when HighPassSubBands = 5, sub-bands increase the frequency resolution, but can generate extra artifacts in the spatial domain due to the sharp frequency cut-offs.}
+  \label{fig:subbands_wavelets}
+\end{figure}
 
 \subsection{Multi-resolution: Image Pyramids}
 
