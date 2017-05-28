@@ -1,0 +1,54 @@
+\documentclass[tikz,border=10pt,multi]{standalone}
+\usepackage[edges]{forest}
+\usepackage{amsmath}
+\colorlet{shadecolor}{gray!20}
+\begin{document}
+\begin{forest}
+  encircle/.style={
+    before typesetting nodes={circle,draw,fill=shadecolor,inner sep=0pt, minimum size = 0.4cm},
+  },
+  for tree={
+    grow'=east,
+    % parent anchor = east,
+    align=c,
+    minimum size = 0.8cm,
+    edge+=thin,
+    font=\footnotesize,
+  },
+  [,phantom
+    [$\hat{d}_{1,1}$, name=d11
+      [$h_1$, draw, tier=4
+        [$+$, encircle, name=plusB
+          [$\hat{f}$]
+        ]
+      ]
+    ]
+    [$\hat{d}_{1,2}$, name=d12
+      [$h_2$, draw, tier=4, name=h2B]
+    ]
+    [$\hat{d}_{2,1}$, name=d21
+      [$h_1$, draw, tier=2
+        [$+$, encircle, name=plusA, tier=3
+          [$\uparrow$U, encircle
+            [$h_0$, draw, tier=4, name=h0B]
+          ]
+        ]
+      ]
+    ]
+    [$\hat{d}_{2,2}$, name=d22%, before computing xy={s=(s("!p")+s("!n"))}
+      [$h_2$, draw, tier=2, name=h2A]
+    ]
+    [$\hat{f}_{\text{Approx}}$
+      [$\uparrow$U, encircle, name=A
+        [$h_0$, draw, tier=2, name=h0A]
+      ]
+    ]
+  ]
+\draw (plusA)--(plusA |- h0A);
+\draw (h0A)--(plusA |- h0A);
+\draw (h2A)--(plusA |- h2A);
+\draw (plusB)--(plusB |- h0B);
+\draw (h0B)--(plusB |- h0B);
+\draw (h2B)--(plusB |- h2B);
+\end{forest}
+\end{document}

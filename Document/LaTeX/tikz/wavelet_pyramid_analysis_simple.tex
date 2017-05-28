@@ -1,0 +1,32 @@
+\documentclass[tikz,border=10pt,multi]{standalone}
+\usepackage[edges]{forest}
+\usepackage{amsmath}
+\colorlet{shadecolor}{gray!20}
+\begin{document}
+\begin{forest}
+  encircle/.style={
+    before typesetting nodes={circle,draw,fill=shadecolor,inner sep=0pt, minimum size = 0.4cm},
+  },
+  for tree={
+    grow'=east,
+    parent anchor = east,
+    align=c,
+    minimum size = 0.8cm,
+    edge+=thin,
+    % fit=tight,
+    % draw,
+    font=\footnotesize,
+  },
+  [$\hat{f}$, forked edge
+  [HP, draw, forked edge
+    [$\hat{d}_1$]]
+  [{LP}, draw, forked edge [$\downarrow$D, encircle
+    [HP, draw, forked edge
+      [$\hat{d}_2$]]
+    [{LP}, draw, forked edge [$\downarrow$D, encircle
+      [$\hat{f}_{\text{Approx}}$]]
+    ]
+  ]]
+  ]
+\end{forest}
+\end{document}
