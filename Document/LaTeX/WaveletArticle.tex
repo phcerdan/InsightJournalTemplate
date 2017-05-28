@@ -1,4 +1,4 @@
-%
+ 
 % Complete documentation on the extended LaTeX markup used for Insight
 % documentation is available in ``Documenting Insight'', which is part
 % of the standard documentation for Insight.  It may be found online
@@ -294,31 +294,32 @@ Condition 2 guarantees that the tiling from all the scales fills the frequency d
 
 %%%%% Condition2 %%%%%%
 \begin{figure}[H]
-  \begin{subfigure}[t]{.49\textwidth}
+  \centering
+  \begin{subfigure}[t]{.45\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{profileMotherWavelet_Vow_5_Mother.png}
+    \includegraphics[width=1.0\textwidth]{profileMotherWavelet_Vow_5_Mother.png}
     \captionsetup{width=\textwidth}
     \caption{Vow.}
     \label{fig:mother_vow}
   \end{subfigure}
-  \begin{subfigure}[t]{.49\textwidth}
+  \begin{subfigure}[t]{.45\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{profileMotherWavelet_Held_5_Mother.png}
+    \includegraphics[width=1.0\textwidth]{profileMotherWavelet_Held_5_Mother.png}
     \captionsetup{width=\textwidth}
     \caption{Held.}
     \label{fig:mother_held}
   \end{subfigure}
   \vskip\baselineskip
-  \begin{subfigure}[t]{.49\textwidth}
+  \begin{subfigure}[t]{.45\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{profileMotherWavelet_Simoncelli_5_Mother.png}
+    \includegraphics[width=1.0\textwidth]{profileMotherWavelet_Simoncelli_5_Mother.png}
     \captionsetup{width=\textwidth}
     \caption{Simoncelli.}
     \label{fig:mother_simoncelli}
   \end{subfigure}
-  \begin{subfigure}[t]{.49\textwidth}
+  \begin{subfigure}[t]{.45\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{profileMotherWavelet_Shannon_5_Mother.png}
+    \includegraphics[width=1.0\textwidth]{profileMotherWavelet_Shannon_5_Mother.png}
     \captionsetup{width=\textwidth}
     \caption{Shannon.}
     \label{fig:mother_shannon}
@@ -328,14 +329,15 @@ Condition 2 guarantees that the tiling from all the scales fills the frequency d
 \end{figure}
 
 \begin{figure}[H]
-  \begin{subfigure}[t]{.49\textwidth}
+  \centering
+  \begin{subfigure}[t]{.45\textwidth}
     \centering
     \includegraphics[width=\textwidth]{profileMotherWavelet_Vow_5_SubBands.png}
     \captionsetup{width=\textwidth}
     \caption{Vow.}
     \label{fig:subbands_vow}
   \end{subfigure}
-  \begin{subfigure}[t]{.49\textwidth}
+  \begin{subfigure}[t]{.45\textwidth}
     \centering
     \includegraphics[width=\textwidth]{profileMotherWavelet_Held_5_SubBands.png}
     \captionsetup{width=\textwidth}
@@ -343,14 +345,14 @@ Condition 2 guarantees that the tiling from all the scales fills the frequency d
     \label{fig:subbands_held}
   \end{subfigure}
   \vskip\baselineskip
-  \begin{subfigure}[t]{.49\textwidth}
+  \begin{subfigure}[t]{.45\textwidth}
     \centering
     \includegraphics[width=\textwidth]{profileMotherWavelet_Simoncelli_5_SubBands.png}
     \captionsetup{width=\textwidth}
     \caption{Simoncelli.}
     \label{fig:subbands_simoncelli}
   \end{subfigure}
-  \begin{subfigure}[t]{.49\textwidth}
+  \begin{subfigure}[t]{.45\textwidth}
     \centering
     \includegraphics[width=\textwidth]{profileMotherWavelet_Shannon_5_SubBands.png}
     \captionsetup{width=\textwidth}
@@ -664,7 +666,7 @@ Choose a mother wavelet from the options available \ref{sub:Isotropic}, and crea
 \label{sub:Forward}
 Perform the wavelet transform based on input levels and high-frequency sub bands.
 \inline{ComputeMaxNumberOfLevels} is a static class function to calculate the max level.
-Currently, the size of input image has to be a multiple of two, but the implementation has the member \inline {m_ScaleFactor} for future extension and relaxation of this constraint.
+Currently, the size of input image has to be a multiple of two, but the implementation has the member \inline {m_ScaleFactor} for future extension and relaxation of this constraint. Use FFTPadPositiveIndexImageFilter for padding the image with zeros for a valid size.
 
 \begin{minted}{c++}
   typedef itk::WaveletFrequencyForward< ComplexImageType, ComplexImageType, WaveletFilterBankType >
@@ -677,9 +679,150 @@ Currently, the size of input image has to be a multiple of two, but the implemen
 
 \subsection{PhaseAnalyzer}
 
+\begin{figure}[H]
+  \begin{subfigure}[t]{.49\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{phaseImages/checker_original512x512.png}
+    \captionsetup{width=\textwidth}
+    \caption{Original}
+    \label{fig:phase_original}
+  \end{subfigure}
+  \begin{subfigure}[t]{.49\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{phaseImages/checker_grayscale.png}
+    \captionsetup{width=\textwidth}
+    \caption{Intensity thresholding}
+    \label{fig:phase_grayscale}
+  \end{subfigure}
+  \caption{The original image looks like a regular check-board, but it isn't. Pixels in the regions A and B have the same intensity value (129), however our vision system performs local phase analysis that allows us to treat A,B regions as different, keeping a global checker-board structure. \ref{fig:phase_grayscale} uses a non-linear map of intensity-color to enhance the irregular checker board structure.}
+  \label{fig:phase_levels}
+\end{figure}
+
+\begin{figure}[H]
+  \begin{subfigure}[t]{.333\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{phaseImages/held2D_1_1.png}
+    \captionsetup{width=\textwidth}
+    \caption{Levels: 1}
+    \label{fig:phase11}
+  \end{subfigure}
+  \begin{subfigure}[t]{.333\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{phaseImages/held2D_2_1.png}
+    \captionsetup{width=\textwidth}
+    \caption{Levels: 2}
+    \label{fig:phase21}
+  \end{subfigure}
+  \begin{subfigure}[t]{.333\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{phaseImages/held2D_3_1.png}
+    \captionsetup{width=\textwidth}
+    \caption{Levels: 3}
+    \label{fig:phase31}
+  \end{subfigure}
+  \vskip\baselineskip
+  \begin{subfigure}[t]{.333\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{phaseImages/held2D_4_1.png}
+    \captionsetup{width=\textwidth}
+    \caption{Levels: 4}
+    \label{fig:phase41}
+  \end{subfigure}
+  \begin{subfigure}[t]{.333\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{phaseImages/held2D_5_1.png}
+    \captionsetup{width=\textwidth}
+    \caption{Levels: 5}
+    \label{fig:phase51}
+  \end{subfigure}
+  \begin{subfigure}[t]{.333\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{phaseImages/held2D_6_1.png}
+    \captionsetup{width=\textwidth}
+    \caption{Levels: 6 }
+    \label{fig:phase61}
+  \end{subfigure}
+  \caption{(Results of the phase analysis (with soft threshold) for different number of scales in the wavelet pyramid. The input image is a checker-board of size $512x512$). }
+  \label{fig:phase_levels}
+\end{figure}
+
+\begin{figure}[H]
+  \begin{subfigure}[t]{.333\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{phaseImages/held2D_6_1.png}
+    \captionsetup{width=\textwidth}
+    \caption{Level: 6, HighPassSubBands: 1}
+    \label{fig:phase_bands61}
+  \end{subfigure}
+  \begin{subfigure}[t]{.333\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{phaseImages/held2D_6_2.png}
+    \captionsetup{width=\textwidth}
+    \caption{HighPassSubBands: 2}
+    \label{fig:phase_bands62}
+  \end{subfigure}
+  \begin{subfigure}[t]{.333\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{phaseImages/held2D_6_3.png}
+    \captionsetup{width=\textwidth}
+    \caption{HighPassSubBands: 3}
+    \label{fig:phase_bands63}
+  \end{subfigure}
+  \vskip\baselineskip
+  \begin{subfigure}[t]{.333\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{phaseImages/held2D_6_4.png}
+    \captionsetup{width=\textwidth}
+    \caption{HighPassSubBands: 4}
+    \label{fig:phase_bands64}
+  \end{subfigure}
+  \begin{subfigure}[t]{.333\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{phaseImages/held2D_6_5.png}
+    \captionsetup{width=\textwidth}
+    \caption{HighPassSubBands: 5}
+    \label{fig:phase_bands65}
+  \end{subfigure}
+  \begin{subfigure}[t]{.333\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{phaseImages/held2D_6_10.png}
+    \captionsetup{width=\textwidth}
+    \caption{HighPassSubBands: 10}
+    \label{fig:phase_bands610}
+  \end{subfigure}
+  \caption{Using the maximum number of scales (Level: 6), results for different number of high frequency sub-bands.}
+  \label{fig:phase_bands}
+\end{figure}
 \subsection{Inverse / Reconstruction}
 \label{sub:Inverse}
 
+\begin{figure}[H]
+  \centering
+  \begin{subfigure}[t]{0.4\textwidth}
+    \centering
+    \includegraphics[width=0.8\textwidth]{phaseImages/hermann_original.png}
+    \captionsetup{width=\textwidth}
+    \caption{Hermann Grid}
+    \label{fig:hermann_original}
+  \end{subfigure}
+  \vskip\baselineskip
+  \begin{subfigure}[t]{.4\textwidth}
+    \centering
+    \includegraphics[width=0.8\textwidth]{phaseImages/hermann_simoncelli_8_1.png}
+    \captionsetup{width=\textwidth}
+    \caption{Levels: 8 (max), HighPassSubBands: 1}
+    \label{fig:hermann_8_1}
+  \end{subfigure}
+  \begin{subfigure}[t]{.4\textwidth}
+    \centering
+    \includegraphics[width=0.8\textwidth]{phaseImages/hermann_simoncelli_8_10.png}
+    \captionsetup{width=\textwidth}
+    \caption{Levels: 8 (max), HighPassSubBands: 10}
+    \label{fig:hermann_8_10}
+  \end{subfigure}
+  \caption{The optical illusion generated by \ref{fig:hermann_original} the Hermann grid is generated by the local phase analysis of our vision. \ref{fig:hermann_8_1} is the result of a phase analysis with the Monogenic signal for a wavelet pyramid of 8 levels and only one high pass sub band. \ref{fig:hermann_8_10} is the same pyramid but with 10 high pass bands to increase the frequency resolution. Both results use Simoncelli wavelet, but there is not much difference using Held, or Vow mother wavelets.}
+  \label{fig:phase_levels}
+\end{figure}
 % \begin{lstlisting}
 \begin{minted}{c++}
 #include "itkHeldIsotropicWavelet.h"
@@ -747,6 +890,13 @@ Currently, the size of input image has to be a multiple of two, but the implemen
 
 \end{minted}
 % \end{lstlisting}
+\section{Conclusion and future work}
+
+This work provides ITK with a multi-resolution analysis based on wavelet decomposition using an isotropic and steerable wavelets. Also it provides utilities to work in the dual or frequency domain. Frequency iterators, shrinkers and expanders. It also provides a sub-sampler without interpolation, and a expander with zeros that work in any domain.
+
+As an application, we implement a local phase analyzer using the wavelet coefficients based on \cite{held_steerable_2010}.
+
+Future work would be easier to implement with the tools already developed; this include the Simoncelli Steerable Framework \cite{simoncelli_steerable_1995}, and the more general Steerable framework using Riesz transform \cite{unser_steerable_2011}. Denoising algorithms can be developed using the exposed wavelet coefficients, for example: Gaussian Mixture Models (GMM)\cite{portilla_image_2003}, or SURE-LET \cite{blu_sure-let_2007}. Wavelets can also be used to feature detection without using template matching in an efficient way \cite{puspoki_template-free_2015}. Implementation of these algorithms will provide state of the art solutions based on wavelets to a wider audience, and I am happy to link to them from the External Repository. \url{https://github.com/phcerdan/ITKIsotropicWavelets}.
 
 % The preceding sections will have been written in a gentler,
 % introductory style.  You may also wish to include a reference
