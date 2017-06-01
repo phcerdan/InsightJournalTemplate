@@ -1,3 +1,4 @@
+\documentclass[tikz,multi]{standalone}
 \providecommand*{\xMin}{}%
 \providecommand*{\xMax}{}%
 \providecommand*{\yMin}{}%
@@ -6,6 +7,7 @@
 \renewcommand*{\xMax}{4}%
 \renewcommand*{\yMin}{0}%
 \renewcommand*{\yMax}{4}%
+\begin{document}
 \begin{tikzpicture}
   \draw [very thin,gray] (\xMax,\yMin) -- (\xMax,4)  node [below] at (0,1){};
 %First block (low resolution)
@@ -35,3 +37,4 @@
   \draw [<->,thick] (\yMin,\yMax + 0.3) node (yaxis) [left] {$f$}
     |- (\xMax + 0.3,\xMin) node (xaxis) [right] {$t$};
 \end{tikzpicture}
+\end{document}
